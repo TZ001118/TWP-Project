@@ -1,0 +1,218 @@
+/* --- Base Reset --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 15px;
+    height: 100%;
+}
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* --- Navbar Container --- */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 999;
+    background: white;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- Part 1: Top Nav --- */
+.top-nav {
+    height: 45px;
+    background: white;
+    overflow: hidden;
+    transition: height 0.4s;
+}
+
+.top-left, .top-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.top-nav a {
+    text-decoration: none;
+    color: #444;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.divider {
+    width: 1px;
+    height: 18px;
+    background-color: #ddd;
+}
+
+/* --- Part 2: Main Header --- */
+.main-header {
+    height: 110px;
+    background: white;
+    border-top: 1.5px solid #333333;
+    transition: height 0.4s;
+}
+
+/* Logo */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logo-box {
+    background: #5eb4a1;
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.logo-text {
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+}
+
+.logo-text span {
+    color: #5eb4a1;
+    font-weight: normal;
+}
+
+.search-box {
+    position: relative;
+    width: 450px; 
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 25px; 
+    border: 1.5px solid #5eb4a1;
+    border-radius: 30px;
+    outline: none;
+}
+
+.search-icon {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #5eb4a1;
+    border: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+}
+
+/* User Info */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    font-size: 13px;
+}
+
+.cart-box {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: bold;
+}
+
+.cart-amount {
+    color: #000000; 
+}
+
+/* --- Part 3: Category Bar (Green Line with Text) --- */
+.category-bar {
+    background-color: #5eb4a1;
+    height: 50px;
+}
+
+.nav-links {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-block;          
+    transition: transform 0.2s ease;
+}
+
+.nav-links a.active {
+    color: black !important; 
+    font-weight: bold;      
+}
+
+.nav-links a.active:hover {
+    transform: scale(1.05);
+}
+
+.nav-links a:hover {
+    transform: scale(1.1); 
+    color: #ffffff;     
+}
+
+.menu-btn {
+    font-weight: bold;
+}
+
+/* --- Folding State (Animation) --- */
+
+.navbar.collapsed .top-nav {
+    height: 0; 
+    border-bottom: none;
+}
+
+.navbar.collapsed .main-header {
+    height: 70px;
+}
+
+/* --- Page Content --- */
+.page-content {
+    margin-top: 205px; 
+    background: white;
+}
+
+
+/* test */
+.dummy-box {
+    height: 2000px; 
+    padding: 50px;
+    color: #999;
+}
+
+.login-reg a {
+    text-decoration: none;
+    color: #000000; 
+    display: inline-block; 
+    transition: transform 0.2s ease; 
+}
+
+.login-reg a:hover {
+    color: #5eb4a1;
+    transform: scale(1.1); 
+}

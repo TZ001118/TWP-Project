@@ -1,31 +1,28 @@
 <?php
 include 'db_conn.php';
-session_start();
+session_start(); // 1. 开启储物柜
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
-    $password = $_POST['password']; // 建议实际项目中使用 password_verify
+    $password = $_POST['password'];
 
+    // 去数据库查询用户
     $sql = "SELECT * FROM users WHERE email = '$email' AND password = '$password'";
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
         
-        // --- 核心控制数据写入 ---
+        // 2. 将登录信息存入储物柜
         $_SESSION['user_id'] = $user['user_id'];
-        $_SESSION['role'] = $user['role'];
         $_SESSION['username'] = $user['username'];
+        $_SESSION['role'] = $user['role'];
 
-        // --- 分流跳转 ---
-        if ($user['role'] === 'admin') {
-            header("Location: admin_dashboard.php");
-        } else {
-            header("Location: index.php");
-        }
-        exit(); 
+        // 3. 登录成功，跳回首页
+        header("Location: HOME.php");
+        exit();
     } else {
-        echo "Invalid email or password.";
+        echo "Invalid account!";
     }
 }
 ?>

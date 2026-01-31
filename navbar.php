@@ -50,7 +50,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     // 检查柜子里是否有 user_id 这个“会员卡”
                     if (isset($_SESSION['user_id'])): 
                     ?>
-                        <span style="color: #5eb4a1; margin-right: 10px;">Welcome, <?php echo $_SESSION['username']; ?></span>
+                        <!-- <span style="color: #5eb4a1; margin-right: 10px;">Welcome, <?php echo $_SESSION['username']; ?></span> -->
                         <a href="USER-DASHBOARD.php">MY PROFILE</a>
                         <span class="divider"></span>
                         <a href="logout.php" style="color: red;">LOGOUT</a>

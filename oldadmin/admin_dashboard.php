@@ -46,7 +46,7 @@ $recent_orders = $conn->query($sql_recent);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - DOMEA</title>
+    <title>Admin Dashboard - Furniture Direct</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -55,17 +55,12 @@ $recent_orders = $conn->query($sql_recent);
     <link rel="stylesheet" href="admin_style.css">
 </head>
 <body>
-    <script>
-        if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
-            document.body.classList.add('sb-sidenav-toggled');
-        }
-    </script>
 
     <div class="d-flex" id="wrapper">
         <div class="border-end" id="sidebar-wrapper">
             <div class="sidebar-heading border-bottom bg-dark text-white">
                 <i class="bi bi-box-seam-fill me-2" style="color: #99d5c5;"></i>
-                <span class="sidebar-text">DOMEA</span> 
+                <span class="sidebar-text">Furniture Direct</span> 
             </div>
             
             <div class="list-group list-group-flush">
@@ -77,10 +72,7 @@ $recent_orders = $conn->query($sql_recent);
                     <i class="bi bi-cart3 me-3"></i>
                     <span class="sidebar-text">Orders</span> 
                 </a>
-                <a href="admin_categories.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-tags-fill me-3"></i><span class="sidebar-text">Categories</span> 
-                </a>
-                <a href="admin_products.php" class="list-group-item list-group-item-action">
+                <a href="#" class="list-group-item list-group-item-action">
                     <i class="bi bi-bag-check me-3"></i>
                     <span class="sidebar-text">Products</span> 
                 </a>
@@ -88,12 +80,13 @@ $recent_orders = $conn->query($sql_recent);
                     <i class="bi bi-people-fill me-3"></i>
                     <span class="sidebar-text">Customers</span> 
                 </a>
-                <a href="admin_reports.php" class="list-group-item list-group-item-action">
+                <a href="#" class="list-group-item list-group-item-action">
                     <i class="bi bi-graph-up-arrow me-3"></i>
                     <span class="sidebar-text">Reports</span> 
                 </a>
-                <a href="admin_profile.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-person-circle me-3"></i><span class="sidebar-text">Admin Profile</span>
+                <a href="admin_profile.php" class="list-group-item list-group-item-action mt-5 border-top border-secondary pt-3">
+                    <i class="bi bi-person-circle me-3"></i>
+                    <span class="sidebar-text">Admin Profile</span> 
                 </a>
             </div>
         </div>
@@ -127,7 +120,7 @@ $recent_orders = $conn->query($sql_recent);
                     <div class="col-12 col-md-6 col-lg-3">
                         <div class="card stat-card bg-custom-primary text-white h-100">
                             <div class="card-body">
-                                <div><p class="mb-0 opacity-75">Total Orders Customer</p><h3 class="fw-bold mb-0"><?php echo $total_orders; ?></h3></div>
+                                <div><p class="mb-0 opacity-75">Total Orders</p><h3 class="fw-bold mb-0"><?php echo $total_orders; ?></h3></div>
                             </div>
                         </div>
                     </div>

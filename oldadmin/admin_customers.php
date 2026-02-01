@@ -13,20 +13,8 @@ if (isset($_GET['delete_id'])) {
     $delete_id = mysqli_real_escape_string($conn, $_GET['delete_id']);
     $sql = "UPDATE users SET is_deleted = 1 WHERE user_id = '$delete_id'";
     if ($conn->query($sql)) {
-        $_SESSION['swal'] = [
-            'type' => 'success',
-            'title' => 'Deleted!',
-            'text' => 'Customer soft-deleted successfully!'
-        ];
-    } else {
-        $_SESSION['swal'] = [
-            'type' => 'error',
-            'title' => 'Error!',
-            'text' => 'Could not delete customer.'
-        ];
+        echo "<script>alert('Customer soft-deleted successfully!'); window.location='admin_customers.php';</script>";
     }
-    header("Location: admin_customers.php");
-    exit();
 }
 
 // --- 3. 处理搜索与筛选 ---
@@ -56,21 +44,16 @@ $result = $conn->query($sql);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="admin_style.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-    <script>
-        if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
-            document.body.classList.add('sb-sidenav-toggled');
-        }
-    </script>
-    
+
     <div class="d-flex" id="wrapper">
         <div class="border-end" id="sidebar-wrapper">
             <div class="sidebar-heading border-bottom bg-dark text-white">
                 <i class="bi bi-box-seam-fill me-2" style="color: #99d5c5;"></i>
-                <span class="sidebar-text">DOMEA</span> 
+                <span class="sidebar-text">Furniture Direct</span> 
             </div>
             <div class="list-group list-group-flush">
                 <a href="admin_dashboard.php" class="list-group-item list-group-item-action">
@@ -79,20 +62,17 @@ $result = $conn->query($sql);
                 <a href="admin_orders.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-cart3 me-3"></i><span class="sidebar-text">Orders</span> 
                 </a>
-                <a href="admin_categories.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-tags-fill me-3"></i><span class="sidebar-text">Categories</span> 
-                </a>
-                <a href="admin_products.php" class="list-group-item list-group-item-action">
+                <a href="#" class="list-group-item list-group-item-action">
                     <i class="bi bi-bag-check me-3"></i><span class="sidebar-text">Products</span> 
                 </a>
                 <a href="admin_customers.php" class="list-group-item list-group-item-action active">
                     <i class="bi bi-people-fill me-3"></i><span class="sidebar-text">Customers</span> 
                 </a>
-                <a href="admin_reports.php" class="list-group-item list-group-item-action">
+                <a href="#" class="list-group-item list-group-item-action">
                     <i class="bi bi-graph-up-arrow me-3"></i><span class="sidebar-text">Reports</span> 
                 </a>
-                <a href="admin_profile.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-person-circle me-3"></i><span class="sidebar-text">Admin Profile</span>
+                <a href="admin_profile.php" class="list-group-item list-group-item-action mt-5 border-top border-secondary pt-3">
+                    <i class="bi bi-person-circle me-3"></i><span class="sidebar-text">Admin Profile</span> 
                 </a>
             </div>
         </div>
@@ -192,10 +172,9 @@ $result = $conn->query($sql);
                                         </td>
                                         <td>
                                             <a href="admin_customer_details.php?id=<?php echo $row['user_id']; ?>" class="btn btn-sm btn-outline-primary me-1">View Details</a>
-                                            
-                                            <a href="#" 
+                                            <a href="admin_customers.php?delete_id=<?php echo $row['user_id']; ?>" 
                                                class="btn btn-sm btn-outline-danger"
-                                               onclick="confirmDelete('admin_customers.php?delete_id=<?php echo $row['user_id']; ?>')">
+                                               onclick="return confirm('Soft delete this user? They will not be able to login.');">
                                                 <i class="bi bi-trash"></i>
                                             </a>
                                         </td>
@@ -213,37 +192,5 @@ $result = $conn->query($sql);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="admin_script.js"></script>
-
-    <script>
-        <?php if(isset($_SESSION['swal'])): ?>
-            Swal.fire({
-                icon: '<?php echo $_SESSION['swal']['type']; ?>',
-                title: '<?php echo $_SESSION['swal']['title']; ?>',
-                text: '<?php echo $_SESSION['swal']['text']; ?>',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-            });
-            <?php unset($_SESSION['swal']); ?>
-        <?php endif; ?>
-
-        function confirmDelete(url) {
-            Swal.fire({
-                title: 'Soft Delete User?',
-                text: "They will not be able to login.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#343a40',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = url;
-                }
-            })
-        }
-    </script>
 </body>
 </html>

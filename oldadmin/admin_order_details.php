@@ -10,8 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
 
 // --- 2. 获取订单 ID ---
 if (!isset($_GET['id'])) {
-    $_SESSION['swal'] = ['type' => 'error', 'title' => 'Error', 'text' => 'No Order ID Provided!'];
-    header("Location: admin_orders.php");
+    echo "<script>alert('No Order ID Provided!'); window.location='admin_orders.php';</script>";
     exit();
 }
 $order_id = mysqli_real_escape_string($conn, $_GET['id']);
@@ -29,22 +28,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
     $update_sql = "UPDATE orders SET status = '$new_status', tracking_number = '$tracking', courier = '$courier' WHERE order_id = '$order_id'";
     
     if ($conn->query($update_sql)) {
-        $_SESSION['swal'] = ['type' => 'success', 'title' => 'Success!', 'text' => 'Order Status Updated!'];
+        echo "<script>alert('Order Status & Fulfillment Info Updated!');</script>";
     } else {
-        $_SESSION['swal'] = ['type' => 'error', 'title' => 'Error!', 'text' => 'Error updating status'];
+        echo "<script>alert('Error updating status');</script>";
     }
-    header("Location: admin_order_details.php?id=$order_id");
-    exit();
 }
 
 // B. 取消订单
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cancel_order'])) {
     $cancel_sql = "UPDATE orders SET status = 'Cancelled' WHERE order_id = '$order_id'";
     if ($conn->query($cancel_sql)) {
-        $_SESSION['swal'] = ['type' => 'success', 'title' => 'Cancelled', 'text' => 'Order has been Cancelled!'];
+        echo "<script>alert('Order has been Cancelled!');</script>";
     }
-    header("Location: admin_order_details.php?id=$order_id");
-    exit();
 }
 
 // --- 4. 获取订单详情 ---
@@ -52,8 +47,7 @@ $sql = "SELECT * FROM orders WHERE order_id = '$order_id'";
 $result = $conn->query($sql);
 
 if ($result->num_rows == 0) {
-    $_SESSION['swal'] = ['type' => 'error', 'title' => 'Not Found', 'text' => 'Order Not Found!'];
-    header("Location: admin_orders.php");
+    echo "<script>alert('Order Not Found!'); window.location='admin_orders.php';</script>";
     exit();
 }
 
@@ -80,33 +74,30 @@ $current_status = $main_info['status'];
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="admin_style.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         /* 打印样式控制 */
         @media print {
             .no-print { display: none !important; }
             .card { border: 1px solid #ddd !important; box-shadow: none !important; margin-bottom: 20px; }
+            
+            /* 打包单模式：隐藏价格 */
             body.packing-slip .price-col { display: none !important; }
             body.packing-slip .invoice-title { display: none; }
             body.packing-slip .packing-title { display: block !important; }
         }
-        .packing-title { display: none; } 
+        .packing-title { display: none; } /* 屏幕上不显示打包单标题 */
+        
         .product-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #eee; }
     </style>
 </head>
 <body>
-    <script>
-        if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
-            document.body.classList.add('sb-sidenav-toggled');
-        }
-    </script>
 
     <div class="d-flex" id="wrapper">
         <div class="border-end" id="sidebar-wrapper">
             <div class="sidebar-heading border-bottom bg-dark text-white">
                 <i class="bi bi-box-seam-fill me-2" style="color: #99d5c5;"></i>
-                <span class="sidebar-text">DOMEA</span> 
+                <span class="sidebar-text">Furniture Direct</span> 
             </div>
             <div class="list-group list-group-flush">
                 <a href="admin_dashboard.php" class="list-group-item list-group-item-action">
@@ -115,20 +106,17 @@ $current_status = $main_info['status'];
                 <a href="admin_orders.php" class="list-group-item list-group-item-action active">
                     <i class="bi bi-cart3 me-3"></i><span class="sidebar-text">Orders</span> 
                 </a>
-                <a href="admin_categories.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-tags-fill me-3"></i><span class="sidebar-text">Categories</span> 
-                </a>
-                <a href="admin_products.php" class="list-group-item list-group-item-action">
+                <a href="#" class="list-group-item list-group-item-action">
                     <i class="bi bi-bag-check me-3"></i><span class="sidebar-text">Products</span> 
                 </a>
                 <a href="admin_customers.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-people-fill me-3"></i><span class="sidebar-text">Customers</span> 
                 </a>
-                <a href="admin_reports.php" class="list-group-item list-group-item-action">
+                <a href="#" class="list-group-item list-group-item-action">
                     <i class="bi bi-graph-up-arrow me-3"></i><span class="sidebar-text">Reports</span> 
                 </a>
-                <a href="admin_profile.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-person-circle me-3"></i><span class="sidebar-text">Admin Profile</span>
+                <a href="admin_profile.php" class="list-group-item list-group-item-action mt-5 border-top border-secondary pt-3">
+                    <i class="bi bi-person-circle me-3"></i><span class="sidebar-text">Admin Profile</span> 
                 </a>
             </div>
         </div>
@@ -269,11 +257,14 @@ $current_status = $main_info['status'];
                                 <form action="" method="POST" id="statusForm">
                                     <label class="form-label small fw-bold">Update Status</label>
                                     <select name="status" id="statusSelect" class="form-select mb-3 fw-bold">
-                                        <option value="Pending" class="text-warning fw-bold" <?php if($current_status == 'Pending') echo 'selected'; ?>>Pending</option>
-                                        <option value="Completed" class="text-success fw-bold" <?php if($current_status == 'Completed') echo 'selected'; ?>>Completed</option>
-                                        <option value="Shipped" class="text-primary fw-bold" <?php if($current_status == 'Shipped') echo 'selected'; ?>>Shipped</option>
-                                        <option value="Cancelled" class="text-danger fw-bold" <?php if($current_status == 'Cancelled') echo 'selected'; ?>>Cancelled</option>
-                                    </select>
+                                    <option value="Pending" class="text-warning fw-bold" <?php if($current_status == 'Pending') echo 'selected'; ?>>Pending</option>
+                                    
+                                    <option value="Completed" class="text-success fw-bold" <?php if($current_status == 'Completed') echo 'selected'; ?>>Completed</option>
+                                    
+                                    <option value="Shipped" class="text-primary fw-bold" <?php if($current_status == 'Shipped') echo 'selected'; ?>>Shipped</option>
+                                    
+                                    <option value="Cancelled" class="text-danger fw-bold" <?php if($current_status == 'Cancelled') echo 'selected'; ?>>Cancelled</option>
+                                </select>
 
                                     <div id="fulfillmentInfo" class="mb-3 p-3 bg-light rounded border <?php if($current_status != 'Shipped') echo 'd-none'; ?>">
                                         <h6 class="small fw-bold mb-2">Fulfillment Info</h6>
@@ -289,9 +280,8 @@ $current_status = $main_info['status'];
                                 </form>
 
                                 <?php if($current_status != 'Cancelled'): ?>
-                                <button type="button" onclick="confirmCancel()" class="btn btn-outline-danger w-100">Cancel Order</button>
-                                <form action="" method="POST" id="cancelForm" style="display:none;">
-                                    <input type="hidden" name="cancel_order" value="1">
+                                <form action="" method="POST" onsubmit="return confirm('Are you sure you want to CANCEL this order?');">
+                                    <button type="submit" name="cancel_order" class="btn btn-outline-danger w-100">Cancel Order</button>
                                 </form>
                                 <?php endif; ?>
                             </div>
@@ -336,44 +326,16 @@ $current_status = $main_info['status'];
     <script src="admin_script.js"></script>
     
     <script>
-        // SweetAlert
-        <?php if(isset($_SESSION['swal'])): ?>
-            Swal.fire({
-                icon: '<?php echo $_SESSION['swal']['type']; ?>',
-                title: '<?php echo $_SESSION['swal']['title']; ?>',
-                text: '<?php echo $_SESSION['swal']['text']; ?>',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-            });
-            <?php unset($_SESSION['swal']); ?>
-        <?php endif; ?>
-
-        function confirmCancel() {
-            Swal.fire({
-                title: 'Cancel Order?',
-                text: "Are you sure you want to cancel this order?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, Cancel it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('cancelForm').submit();
-                }
-            })
-        }
-
         // 1. 获取元素
         const statusSelect = document.getElementById('statusSelect');
         const fulfillmentInfo = document.getElementById('fulfillmentInfo');
         
-        // 2. 颜色切换函数
+        // 2. 颜色切换函数 (独立提取出来)
         function updateColor(select) {
+            // 先移除所有颜色类
             select.classList.remove('text-warning', 'border-warning', 'text-success', 'border-success', 'text-danger', 'border-danger', 'text-primary', 'border-primary');
+            
+            // 再添加新颜色
             if (select.value === 'Pending') select.classList.add('text-warning', 'border-warning');
             else if (select.value === 'Completed') select.classList.add('text-success', 'border-success');
             else if (select.value === 'Cancelled') select.classList.add('text-danger', 'border-danger');
@@ -382,9 +344,14 @@ $current_status = $main_info['status'];
 
         // 3. 监听变化
         if (statusSelect) {
+            // 初始化颜色
             updateColor(statusSelect);
+
             statusSelect.addEventListener('change', function() {
+                // A. 变色
                 updateColor(this);
+                
+                // B. 控制发货框显示/隐藏 (如果有这个框的话)
                 if (fulfillmentInfo) {
                     if(this.value === 'Shipped') {
                         fulfillmentInfo.classList.remove('d-none');
@@ -395,6 +362,7 @@ $current_status = $main_info['status'];
             });
         }
 
+        // ... 下面是你其他的打印函数 ...
         function printInvoice() {
             document.body.classList.remove('packing-slip');
             window.print();
@@ -409,4 +377,4 @@ $current_status = $main_info['status'];
         }
 </script>
 </body>
-</html>     
+</html>

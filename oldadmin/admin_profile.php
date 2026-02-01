@@ -91,17 +91,12 @@ $user = $result_user->fetch_assoc();
     <link rel="stylesheet" href="admin_style.css">
 </head>
 <body>
-    <script>
-        if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
-            document.body.classList.add('sb-sidenav-toggled');
-        }
-    </script>
-    
+
     <div class="d-flex" id="wrapper">
         <div class="border-end" id="sidebar-wrapper">
             <div class="sidebar-heading border-bottom bg-dark text-white">
                 <i class="bi bi-box-seam-fill me-2" style="color: #99d5c5;"></i>
-                <span class="sidebar-text">DOMEA</span> 
+                <span class="sidebar-text">Furniture Direct</span> 
             </div>
             <div class="list-group list-group-flush">
                 <a href="admin_dashboard.php" class="list-group-item list-group-item-action">
@@ -110,20 +105,17 @@ $user = $result_user->fetch_assoc();
                 <a href="admin_orders.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-cart3 me-3"></i><span class="sidebar-text">Orders</span> 
                 </a>
-                <a href="admin_categories.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-tags-fill me-3"></i><span class="sidebar-text">Categories</span> 
-                </a>
-                <a href="admin_products.php" class="list-group-item list-group-item-action">
+                <a href="#" class="list-group-item list-group-item-action">
                     <i class="bi bi-bag-check me-3"></i><span class="sidebar-text">Products</span> 
                 </a>
                 <a href="admin_customers.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-people-fill me-3"></i><span class="sidebar-text">Customers</span> 
                 </a>
-                <a href="admin_reports.php" class="list-group-item list-group-item-action">
+                <a href="#" class="list-group-item list-group-item-action">
                     <i class="bi bi-graph-up-arrow me-3"></i><span class="sidebar-text">Reports</span> 
-                
-                <a href="admin_profile.php" class="list-group-item list-group-item-action active">
-                    <i class="bi bi-person-circle me-3"></i><span class="sidebar-text">Admin Profile</span>
+                </a>
+                <a href="admin_profile.php" class="list-group-item list-group-item-action active mt-5 border-top border-secondary pt-3">
+                    <i class="bi bi-person-circle me-3"></i><span class="sidebar-text">Admin Profile</span> 
                 </a>
             </div>
         </div>
@@ -216,20 +208,5 @@ $user = $result_user->fetch_assoc();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="admin_script.js"></script>
-    <script>
-        <?php if(isset($_SESSION['swal'])): ?>
-            Swal.fire({
-                icon: '<?php echo $_SESSION['swal']['type']; ?>',
-                title: '<?php echo $_SESSION['swal']['title']; ?>',
-                text: '<?php echo $_SESSION['swal']['text']; ?>',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-            });
-            <?php unset($_SESSION['swal']); ?>
-        <?php endif; ?>
-    </script>
 </body>
 </html>

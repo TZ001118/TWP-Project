@@ -19,12 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         $sql = "UPDATE users SET email='$email', phone='$phone', account_status='$status' WHERE user_id='$user_id'";
         if($conn->query($sql)) {
-            $_SESSION['swal'] = ['type' => 'success', 'title' => 'Success!', 'text' => 'Profile updated successfully!'];
+            echo "<script>alert('Profile updated successfully!');</script>";
         } else {
-            $_SESSION['swal'] = ['type' => 'error', 'title' => 'Error!', 'text' => 'Error updating profile.'];
+            echo "<script>alert('Error updating profile.');</script>";
         }
-        header("Location: admin_customer_details.php?id=$user_id");
-        exit();
     }
 
     // B. 重置密码 (新增了规则验证)
@@ -33,31 +31,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // --- 🔒 后端强制规则验证 ---
         if (strlen($new_pass) < 12) {
-            $_SESSION['swal'] = ['type' => 'error', 'title' => 'Weak Password', 'text' => 'Password must be at least 12 characters long!'];
+            echo "<script>alert('Error: Password must be at least 12 characters long!');</script>";
         } elseif (!preg_match("/[0-9]/", $new_pass)) {
-            $_SESSION['swal'] = ['type' => 'error', 'title' => 'Weak Password', 'text' => 'Password must include at least one number!'];
+            echo "<script>alert('Error: Password must include at least one number!');</script>";
         } elseif (!preg_match("/[A-Z]/", $new_pass)) {
-            $_SESSION['swal'] = ['type' => 'error', 'title' => 'Weak Password', 'text' => 'Password must include at least one UPPERCASE letter!'];
+            echo "<script>alert('Error: Password must include at least one UPPERCASE letter!');</script>";
         } elseif (!preg_match("/[!@#$%^&*(),.?\":{}|<>]/", $new_pass)) {
-            $_SESSION['swal'] = ['type' => 'error', 'title' => 'Weak Password', 'text' => 'Password must include at least one Special symbol!'];
+        echo "<script>alert('Error: Password must include at least one Special symbols (such as:!@#%^&*)！');</script>";
         } else {
             // 规则通过，加密并保存
             $hashed = password_hash($new_pass, PASSWORD_DEFAULT);
             $conn->query("UPDATE users SET password='$hashed' WHERE user_id='$user_id'");
-            $_SESSION['swal'] = ['type' => 'success', 'title' => 'Success!', 'text' => 'Password reset successfully!'];
+            echo "<script>alert('Password reset successfully! Make sure to inform the customer.');</script>";
         }
-        header("Location: admin_customer_details.php?id=$user_id");
-        exit();
     }
 
     // C. 删除地址
     if (isset($_POST['delete_address'])) {
         $addr_id = mysqli_real_escape_string($conn, $_POST['address_id']);
-        if ($conn->query("DELETE FROM user_addresses WHERE address_id='$addr_id'")) {
-            $_SESSION['swal'] = ['type' => 'success', 'title' => 'Deleted', 'text' => 'Address deleted successfully.'];
-        }
-        header("Location: admin_customer_details.php?id=$user_id");
-        exit();
+        $conn->query("DELETE FROM user_addresses WHERE address_id='$addr_id'");
     }
 }
 
@@ -81,7 +73,6 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="admin_style.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
         /* 密码规则的样式 */
@@ -101,14 +92,10 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
             
             <div class="d-flex align-items-center border-bottom pb-3">
                 <h3 class="fw-bold m-0">Customer Profile: <span class="text-primary"><?php echo $user['username']; ?></span></h3>
-            </div>
+                
+                </div>
         </div>
-    <script>
-        if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
-            document.body.classList.add('sb-sidenav-toggled');
-        }
-    </script>
-    
+
         <div class="row">
             <div class="col-md-3">
                 <div class="card border-0 shadow-sm text-center p-4 mb-3">
@@ -218,7 +205,7 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
                                             <td><?php echo date("d M Y", strtotime($o['order_date'])); ?></td>
                                             <td>$<?php echo number_format($o['price'], 2); ?></td>
                                             <td><span class="badge bg-secondary"><?php echo $o['status']; ?></span></td>
-                                            <td><a href="admin_order_details.php?id=<?php echo $o['order_id']; ?>" class="btn btn-sm btn-link">View</a></td>
+                                            <td><a href="order_details.php?id=<?php echo $o['order_id']; ?>" class="btn btn-sm btn-link">View</a></td>
                                         </tr>
                                         <?php endwhile; else: echo "<tr><td colspan='5'>No orders found.</td></tr>"; endif; ?>
                                     </tbody>
@@ -284,42 +271,36 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
     <script src="admin_script.js"></script>
     
     <script>
-    // SweetAlert logic
-    <?php if(isset($_SESSION['swal'])): ?>
-        Swal.fire({
-            icon: '<?php echo $_SESSION['swal']['type']; ?>',
-            title: '<?php echo $_SESSION['swal']['title']; ?>',
-            text: '<?php echo $_SESSION['swal']['text']; ?>',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-        });
-        <?php unset($_SESSION['swal']); ?>
-    <?php endif; ?>
-
     document.addEventListener('DOMContentLoaded', function() {
-        // ... (原有的密码规则 JS 保持不变)
         const passInput = document.getElementById('newPassInput');
-        const ruleLength = document.getElementById('rule-length');
+        const ruleLength = document.getElementById('rule-length'); // 记得把 HTML 里的文字改成 12 chars
         const ruleNumber = document.getElementById('rule-number');
         const ruleUpper = document.getElementById('rule-upper');
-        const ruleSpecial = document.getElementById('rule-special'); 
+        const ruleSpecial = document.getElementById('rule-special'); // 1. 新增：获取元素
 
         if(passInput) {
             passInput.addEventListener('input', function() {
                 const val = this.value;
+
+                // 检查长度 (>= 12)
                 updateRule(ruleLength, val.length >= 12);
+
+                // 检查数字
                 updateRule(ruleNumber, /\d/.test(val));
+
+                // 检查大写字母
                 updateRule(ruleUpper, /[A-Z]/.test(val));
+
+                // 2. 新增：检查特殊符号
                 const specialChars = /[!@#$%^&*(),.?":{}|<>]/;
                 updateRule(ruleSpecial, specialChars.test(val));
             });
         }
 
         function updateRule(element, isValid) {
+            // 防止 element 没找到报错
             if (!element) return; 
+
             const icon = element.querySelector('i');
             if (isValid) {
                 element.classList.add('valid');
@@ -337,6 +318,6 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
             }
         }
     });
-    </script>
+</script>
 </body>
 </html>

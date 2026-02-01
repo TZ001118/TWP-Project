@@ -20,8 +20,8 @@ if (session_status() === PHP_SESSION_NONE) {
     <div class="main-header">
         <div class="container flex-between">
             <div class="logo">
-                <div class="logo-box">F</div>
-                <div class="logo-text">FURNITURE<span>direct</span></div>
+                <div class="logo-box">D</div>
+                <div class="logo-text">DOMEA</div>
             </div>
             
             <div class="search-section">
@@ -47,7 +47,12 @@ if (session_status() === PHP_SESSION_NONE) {
 
     <nav class="category-bar">
         <div class="container nav-links">
-            <a href="CATEGORIES.php" class="menu-btn">☰ CATEGORIES</a>
+            <div class="dropdown-container">
+                <a href="CATEGORIES.php" class="menu-btn">☰ CATEGORIES</a>
+                <div class="dropdown-content">
+                    
+                </div>
+            </div>
             
             <a href="HOME.php" class="<?php echo ($current_page == 'home') ? 'active' : ''; ?>">HOME</a>
             
@@ -60,4 +65,59 @@ if (session_status() === PHP_SESSION_NONE) {
             <a href="REVIEWS.php" class="<?php echo ($current_page == 'reviews') ? 'active' : ''; ?>">REVIEWS</a>
         </div>
     </nav>
+    <style>
+        .dropdown-container {
+            position: relative;
+            display: inline-block;
+            height: 100%;
+        }
+
+        .dropdown-container .menu-btn {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .dropdown-content {
+            display: none; 
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1000;
+            top: 50px;
+            left: 0;
+            border-top: 3px solid #333;
+        }
+
+        .dropdown-container:hover .dropdown-content {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .dropdown-content a {
+            color: #333 !important;
+            padding: 12px 20px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f8f8f8;
+            color: #5eb4a1 !important;
+            transform: translateX(5px) !important;
+            padding-left: 25px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </header>

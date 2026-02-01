@@ -2,29 +2,18 @@
 session_start();
 include 'db_conn.php';
 
-// --- 安全检查 ---
+// --- 1. 安全检查 ---
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
     header("Location: LOGIN-REGISTER.php");
     exit();
 }
 
-// --- 数据获取逻辑 ---
+// --- 2. 处理搜索和筛选 ---
+$search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
 
-// 1. 统计数据
-$sql_orders = "SELECT COUNT(DISTINCT order_id) as total_orders FROM orders"; 
-$result_orders = $conn->query($sql_orders);
-$total_orders = $result_orders->fetch_assoc()['total_orders'];
-
-$sql_revenue = "SELECT SUM(price) as total_revenue FROM orders WHERE status != 'Cancelled'";
-$result_revenue = $conn->query($sql_revenue);
-$total_revenue = $result_revenue->fetch_assoc()['total_revenue'] ?? 0;
-
-$sql_users = "SELECT COUNT(*) as total_users FROM users WHERE role='customer'";
-$result_users = $conn->query($sql_users);
-$total_users = $result_users->fetch_assoc()['total_users'];
-
-// 2. 获取最近订单 (多商品合并显示逻辑)
-$sql_recent = "
+// 构建 SQL 查询 (支持搜索 + 筛选 + 多商品合并)
+$sql = "
     SELECT 
         order_id, 
         customer_name, 
@@ -34,11 +23,23 @@ $sql_recent = "
         GROUP_CONCAT(product_name SEPARATOR ', ') as product_summary,
         COUNT(product_name) as item_count
     FROM orders 
-    GROUP BY order_id 
-    ORDER BY order_date DESC 
-    LIMIT 5
+    WHERE 1=1
 ";
-$recent_orders = $conn->query($sql_recent);
+
+// 如果有搜索关键词 (搜名字 或 订单ID)
+if (!empty($search)) {
+    $sql .= " AND (customer_name LIKE '%$search%' OR order_id LIKE '%$search%') ";
+}
+
+// 如果有状态筛选
+if (!empty($status_filter)) {
+    $sql .= " AND status = '$status_filter' ";
+}
+
+// 必须分组 (GROUP BY) 才能配合 GROUP_CONCAT 使用
+$sql .= " GROUP BY order_id ORDER BY order_date DESC";
+
+$result = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
@@ -46,7 +47,7 @@ $recent_orders = $conn->query($sql_recent);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - DOMEA</title>
+    <title>Manage Orders - Furniture Direct</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -55,32 +56,24 @@ $recent_orders = $conn->query($sql_recent);
     <link rel="stylesheet" href="admin_style.css">
 </head>
 <body>
-    <script>
-        if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
-            document.body.classList.add('sb-sidenav-toggled');
-        }
-    </script>
 
     <div class="d-flex" id="wrapper">
         <div class="border-end" id="sidebar-wrapper">
             <div class="sidebar-heading border-bottom bg-dark text-white">
                 <i class="bi bi-box-seam-fill me-2" style="color: #99d5c5;"></i>
-                <span class="sidebar-text">DOMEA</span> 
+                <span class="sidebar-text">Furniture Direct</span> 
             </div>
             
             <div class="list-group list-group-flush">
-                <a href="#" class="list-group-item list-group-item-action active">
+                <a href="admin_dashboard.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-grid-1x2-fill me-3"></i>
                     <span class="sidebar-text">Dashboard</span> 
                 </a>
-                <a href="admin_orders.php" class="list-group-item list-group-item-action">
+                <a href="admin_orders.php" class="list-group-item list-group-item-action active">
                     <i class="bi bi-cart3 me-3"></i>
                     <span class="sidebar-text">Orders</span> 
                 </a>
-                <a href="admin_categories.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-tags-fill me-3"></i><span class="sidebar-text">Categories</span> 
-                </a>
-                <a href="admin_products.php" class="list-group-item list-group-item-action">
+                <a href="#" class="list-group-item list-group-item-action">
                     <i class="bi bi-bag-check me-3"></i>
                     <span class="sidebar-text">Products</span> 
                 </a>
@@ -88,12 +81,13 @@ $recent_orders = $conn->query($sql_recent);
                     <i class="bi bi-people-fill me-3"></i>
                     <span class="sidebar-text">Customers</span> 
                 </a>
-                <a href="admin_reports.php" class="list-group-item list-group-item-action">
+                <a href="#" class="list-group-item list-group-item-action">
                     <i class="bi bi-graph-up-arrow me-3"></i>
                     <span class="sidebar-text">Reports</span> 
                 </a>
-                <a href="admin_profile.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-person-circle me-3"></i><span class="sidebar-text">Admin Profile</span>
+                <a href="admin_profile.php" class="list-group-item list-group-item-action mt-5 border-top border-secondary pt-3">
+                    <i class="bi bi-person-circle me-3"></i>
+                    <span class="sidebar-text">Admin Profile</span> 
                 </a>
             </div>
         </div>
@@ -103,7 +97,7 @@ $recent_orders = $conn->query($sql_recent);
                 <div class="container-fluid p-0 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center">
                         <button class="btn btn-light btn-sm me-3 border" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
-                        <h5 class="m-0 d-none d-md-block text-secondary">Admin Overview</h5>
+                        <h5 class="m-0 d-none d-md-block text-secondary">Manage Orders</h5>
                     </div>
 
                     <ul class="navbar-nav ms-auto flex-row align-items-center">
@@ -123,41 +117,35 @@ $recent_orders = $conn->query($sql_recent);
             </nav>
 
             <div class="container-fluid p-4">
-                <div class="row g-3 g-md-4 mb-5">
-                    <div class="col-12 col-md-6 col-lg-3">
-                        <div class="card stat-card bg-custom-primary text-white h-100">
-                            <div class="card-body">
-                                <div><p class="mb-0 opacity-75">Total Orders Customer</p><h3 class="fw-bold mb-0"><?php echo $total_orders; ?></h3></div>
+
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <form method="GET" action="admin_orders.php" class="d-md-flex gap-2">
+                            <div class="input-group mb-2 mb-md-0" style="max-width: 300px;">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
+                                <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Search ID or Customer..." value="<?php echo htmlspecialchars($search); ?>">
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-3">
-                        <div class="card stat-card bg-custom-success text-white h-100">
-                            <div class="card-body">
-                                <div><p class="mb-0 opacity-75">Total Revenue</p><h3 class="fw-bold mb-0">$<?php echo number_format($total_revenue, 2); ?></h3></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-3">
-                        <div class="card stat-card bg-custom-warning text-white h-100">
-                            <div class="card-body">
-                                <div><p class="mb-0 opacity-75">Total Users</p><h3 class="fw-bold mb-0"><?php echo $total_users; ?></h3></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-3">
-                        <div class="card stat-card bg-custom-danger text-white h-100">
-                            <div class="card-body">
-                                <div><p class="mb-0 opacity-75">Pending Issues</p><h3 class="fw-bold mb-0">0</h3></div>
-                            </div>
-                        </div>
+                            
+                            <select name="status" class="form-select mb-2 mb-md-0" style="max-width: 150px;">
+                                <option value="">All Status</option>
+                                <option value="Pending" <?php if($status_filter == 'Pending') echo 'selected'; ?>>Pending</option>
+                                <option value="Completed" <?php if($status_filter == 'Completed') echo 'selected'; ?>>Completed</option>
+                                <option value="Cancelled" <?php if($status_filter == 'Cancelled') echo 'selected'; ?>>Cancelled</option>
+                            </select>
+
+                            <button type="submit" class="btn text-white" style="background-color: #343a40;">Filter</button>
+                            
+                            <?php if(!empty($search) || !empty($status_filter)): ?>
+                                <a href="admin_orders.php" class="btn btn-light border">Reset</a>
+                            <?php endif; ?>
+                        </form>
                     </div>
                 </div>
 
                 <div class="card custom-table-card bg-white">
-                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-bold text-dark">Recent Orders</h5>
-                        </div>
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold text-dark">Order List</h5>
+                    </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0">
@@ -165,7 +153,8 @@ $recent_orders = $conn->query($sql_recent);
                                     <tr>
                                         <th class="ps-4">Order ID</th>
                                         <th>Customer</th>
-                                        <th>Products (Summary)</th> <th>Total Price</th>
+                                        <th>Products (Summary)</th>
+                                        <th>Total Price</th>
                                         <th>Date</th>
                                         <th>Status</th>
                                         <th>Action</th>
@@ -173,8 +162,8 @@ $recent_orders = $conn->query($sql_recent);
                                 </thead>
                                 <tbody>
                                     <?php
-                                    if ($recent_orders && $recent_orders->num_rows > 0) {
-                                        while($row = $recent_orders->fetch_assoc()) {
+                                    if ($result && $result->num_rows > 0) {
+                                        while($row = $result->fetch_assoc()) {
                                             $badge_class = 'bg-secondary';
                                             if ($row['status'] == 'Completed') $badge_class = 'bg-success text-success';
                                             if ($row['status'] == 'Pending') $badge_class = 'bg-warning text-warning';
@@ -212,10 +201,8 @@ $recent_orders = $conn->query($sql_recent);
                             </table>
                         </div>
                     </div>
-                    <div class="card-footer bg-white border-0 py-3 text-center">
-                        <a href="admin_orders.php" class="text-decoration-none text-muted small hover-link">View All Orders</a>
-                    </div>
                 </div>
+
             </div>
         </div>
     </div>

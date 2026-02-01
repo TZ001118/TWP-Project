@@ -245,3 +245,41 @@
         font-size: 14px;
     }
 }
+
+.furniture-grid-container {
+    display: flex; 
+    gap: 15px; 
+    max-width: 1300px;
+    margin: 20px auto; 
+    padding: 0 15px;
+}
+
+
+.grid-left {
+    flex: 2;
+}
+
+
+.grid-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column; 
+    gap: 15px;
+}
+
+.hotspot-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.main-bg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    display: block;
+}
+
+.hotspot {
+    position: absolute;
+}

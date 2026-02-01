@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['role'] = $user['role'];
 
             if ($user['role'] == 'admin') {
-                echo "<script>window.location='ADMIN-DASHBOARD.php';</script>";
+                echo "<script>window.location='admin_dashboard.php';</script>";
             } else {
                 echo "<script>window.location='USER-DASHBOARD.php';</script>";
             }

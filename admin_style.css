@@ -1,0 +1,103 @@
+/* admin_style.css */
+
+/* 1. 全局字体与背景 */
+body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; overflow-x: hidden; }
+h1, h2, h3, h4, h5, h6, .navbar-brand, .sidebar-heading { font-family: 'Poppins', sans-serif; }
+
+/* 2. 侧边栏核心样式 (左对齐迷你版) */
+#sidebar-wrapper {
+    min-height: 100vh;
+    margin-left: -16rem; /* 手机端默认隐藏 */
+    width: 16rem;
+    transition: all 0.3s ease;
+    background-color: #343a40;
+    color: #94a3b8;
+    z-index: 1000;
+}
+
+#sidebar-wrapper .sidebar-heading { 
+    padding: 1.2rem 1.5rem; 
+    font-size: 1.4rem; 
+    font-weight: 700; color: #fff; 
+    background-color: #212529; 
+    border-bottom: 1px solid #495057;
+}
+
+#sidebar-wrapper .list-group { width: 16rem; }
+
+#sidebar-wrapper .list-group-item { 
+    background-color: transparent; 
+    color: #cbd5e1; 
+    border: none; 
+    padding: 1rem 1.5rem; 
+    font-weight: 500; 
+    transition: all 0.2s; 
+    border-left: 4px solid transparent; 
+}
+
+#sidebar-wrapper .list-group-item:hover { 
+    background-color: #495057; 
+    color: #fff; 
+}
+
+#sidebar-wrapper .list-group-item.active { 
+    background-color: #495057; 
+    color: #99d5c5; 
+    border-left-color: #99d5c5; 
+    font-weight: 600; 
+}
+
+#page-content-wrapper { width: 100%; }
+.navbar { background-color: #ffffff !important; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+
+/* 3. Dashboard 统计卡片颜色 */
+.stat-card { border: none; border-radius: 12px; transition: transform 0.3s ease, box-shadow 0.3s ease; overflow: hidden; }
+.stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+.bg-custom-primary { background: linear-gradient(135deg, #99d5c5, #7fcab5); }
+.bg-custom-success { background: linear-gradient(135deg, #10b981, #059669); }
+.bg-custom-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.bg-custom-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+/* 4. 表格通用样式 */
+.custom-table-card { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+.table thead th { background-color: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; border-bottom: 2px solid #e2e8f0; }
+.table td { vertical-align: middle; }
+
+/* 5. 响应式与侧边栏收起逻辑 (核心) */
+@media (min-width: 768px) {
+    #sidebar-wrapper { margin-left: 0; width: 16rem; }
+    #page-content-wrapper { margin-left: 0; width: 100%; transition: all 0.3s ease; }
+
+    /* 收起状态 */
+    body.sb-sidenav-toggled #sidebar-wrapper { margin-left: 0; width: 5rem; }
+    body.sb-sidenav-toggled .sidebar-text { display: none; }
+
+    /* Logo 靠左 */
+    body.sb-sidenav-toggled .sidebar-heading {
+        display: flex; justify-content: flex-start; align-items: center;
+        padding: 1.2rem 0; padding-left: 18px;
+    }
+    body.sb-sidenav-toggled .sidebar-heading i { margin: 0 !important; font-size: 1.8rem; }
+
+    /* 菜单项 靠左 */
+    body.sb-sidenav-toggled .list-group-item {
+        display: flex; justify-content: center; align-items: center;
+        width: 50px; height: 50px;
+        margin: 0 0 10px 12px !important; /* 靠左间距 */
+        border: none !important; padding: 0 !important;
+        border-radius: 12px;
+    }
+    body.sb-sidenav-toggled .list-group-item i { margin: 0 !important; font-size: 1.4rem; line-height: 1; }
+    body.sb-sidenav-toggled .list-group-item.active { background-color: #99d5c5; color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+}
+
+@media (max-width: 767.98px) {
+    body.sb-sidenav-toggled #sidebar-wrapper { margin-left: 0; }
+}
+
+/* 6. 打印样式 */
+@media print {
+    #sidebar-wrapper, .navbar, .no-print { display: none !important; }
+    #page-content-wrapper { margin: 0; width: 100%; }
+    .card { border: none !important; box-shadow: none !important; }
+}

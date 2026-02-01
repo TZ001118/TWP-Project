@@ -36,6 +36,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     if (isset($_SESSION['user_id'])): 
                     ?>
                         <a href="USER-DASHBOARD.php"><span style="color: #5eb4a1; margin-right: 10px;">Hello, <?php echo $_SESSION['username']; ?></span></a>
+                        <a href="logout.php"> logout</a>
                     <?php else: ?>
                         <a href="LOGIN-REGISTER.php">LOGIN / REGISTER</a>
                     <?php endif; ?>

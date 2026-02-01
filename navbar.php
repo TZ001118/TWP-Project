@@ -30,31 +30,12 @@ if (session_status() === PHP_SESSION_NONE) {
                     <button class="search-icon"><img src="img/Search.png" alt="🔍" style="width:30px; height:30px;"></button>
                 </div>
             </div>
-
-            <!-- <div class="user-info">
-                <div class="login-reg">
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <a href="USER-DASHBOARD.php">USER DASHBOARD</a>
-                    <?php else: ?>
-                        <a href="LOGIN-REGISTER.php">LOGIN / REGISTER</a>
-                    <?php endif; ?>
-                </div>
-                <div class="cart-box">
-                    <span class="cart-icon">🛒</span>
-                    <span class="cart-amount">RM 0.00</span>
-                </div>
-            </div> -->
             <div class="user-info">
                 <div class="login-reg">
                     <?php 
-                    // 检查柜子里是否有 user_id 这个“会员卡”
                     if (isset($_SESSION['user_id'])): 
                     ?>
-                        <!-- <span style="color: #5eb4a1; margin-right: 10px;">Welcome, <?php echo $_SESSION['username']; ?></span> -->
-                        <a href="USER-DASHBOARD.php">MY PROFILE</a>
-                        <span class="divider"></span>
-                        <a href="logout.php" style="color: red;">LOGOUT</a>
-
+                        <a href="USER-DASHBOARD.php"><span style="color: #5eb4a1; margin-right: 10px;">Hello, <?php echo $_SESSION['username']; ?></span></a>
                     <?php else: ?>
                         <a href="LOGIN-REGISTER.php">LOGIN / REGISTER</a>
                     <?php endif; ?>

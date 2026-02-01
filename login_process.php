@@ -1,28 +1,35 @@
 <?php
 include 'db_conn.php';
-session_start(); // 1. 开启储物柜
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email = $_POST['email'];
+    $identifier = mysqli_real_escape_string($conn, $_POST['identifier']);
     $password = $_POST['password'];
 
-    // 去数据库查询用户
-    $sql = "SELECT * FROM users WHERE email = '$email' AND password = '$password'";
+    $sql = "SELECT * FROM users WHERE email = '$identifier' OR username = '$identifier'";
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
         
-        // 2. 将登录信息存入储物柜
-        $_SESSION['user_id'] = $user['user_id'];
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['role'] = $user['role'];
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['role'] = $user['role'];
 
-        // 3. 登录成功，跳回首页
-        header("Location: HOME.php");
-        exit();
+            if ($user['role'] == 'admin') {
+                echo "<script>window.location='ADMIN-DASHBOARD.php';</script>";
+            } else {
+                echo "<script>window.location='USER-DASHBOARD.php';</script>";
+            }
+            exit();
+        } else {
+            echo "<script>alert('Wrong password!'); window.location='LOGIN-REGISTER.php';</script>";
+        }
     } else {
-        echo "Invalid account!";
+        echo "<script>alert('Account not found!'); window.location='LOGIN-REGISTER.php';</script>";
     }
 }
 ?>

@@ -1,0 +1,252 @@
+.main-product-container {
+    padding-top: 20px;
+    padding-bottom: 60px;
+}
+
+.breadcrumb {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.breadcrumb a {
+    text-decoration: none;
+    color: #333;
+}
+
+.breadcrumb a:hover {
+    color: #5eb4a1;
+}
+
+.product-detail-wrapper {
+    display: flex;
+    gap: 50px;
+    flex-wrap: wrap;
+}
+
+/* --- Left: Gallery --- */
+.gallery-section {
+    flex: 1;
+    min-width: 400px;
+}
+
+.main-image-box {
+    width: 100%;
+    height: 500px;
+    background-color: #f8f8f8;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.main-image-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.thumbnail-row {
+    display: flex;
+    gap: 15px;
+}
+
+.thumb-box {
+    width: 80px;
+    height: 80px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s;
+}
+
+.thumb-box:hover {
+    border-color: #5eb4a1;
+}
+
+.thumb-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumb-box.empty {
+    border: none;
+    background: transparent;
+    cursor: default;
+}
+
+/* --- Right: Info --- */
+.info-section {
+    flex: 1;
+    min-width: 350px;
+}
+
+.product-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.rating-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.text-warning { color: #ffc107; }
+.text-muted { color: #ccc; }
+.review-count { font-size: 14px; color: #777; }
+
+.price-box {
+    margin-bottom: 25px;
+}
+
+.old-price {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 18px;
+    margin-right: 15px;
+}
+
+.current-price {
+    font-size: 28px;
+    color: #5eb4a1;
+    font-weight: bold;
+}
+
+.description-box {
+    font-size: 15px;
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 30px;
+}
+
+.meta-info {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.meta-item {
+    margin-bottom: 8px;
+}
+
+.text-success { color: #28a745; }
+.text-danger { color: #dc3545; }
+
+.divider {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 20px 0;
+}
+
+.variants-box {
+    margin-bottom: 20px;
+}
+
+.variant-row {
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+.variant-label {
+    font-weight: bold;
+    color: #333;
+    width: 80px;
+    display: inline-block;
+}
+
+.specs-box {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-bottom: 30px;
+}
+
+.spec-item {
+    margin-bottom: 5px;
+}
+
+/* --- Cart Form --- */
+.add-cart-form {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.qty-wrapper {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.qty-wrapper button {
+    background: #f1f1f1;
+    border: none;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.qty-wrapper button:hover {
+    background: #e0e0e0;
+}
+
+.qty-wrapper input {
+    width: 50px;
+    border: none;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    outline: none;
+}
+
+.btn-add-cart {
+    background-color: #5eb4a1;
+    color: white;
+    border: none;
+    padding: 0 40px;
+    height: 40px;
+    border-radius: 25px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-size: 14px;
+}
+
+.btn-add-cart:hover {
+    background-color: #4ca390;
+}
+
+.btn-add-cart.disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .product-detail-wrapper {
+        flex-direction: column;
+    }
+    
+    .gallery-section {
+        min-width: 100%;
+    }
+    
+    .main-image-box {
+        height: 350px;
+    }
+}

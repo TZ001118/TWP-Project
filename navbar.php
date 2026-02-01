@@ -48,9 +48,14 @@ if (session_status() === PHP_SESSION_NONE) {
     <nav class="category-bar">
         <div class="container nav-links">
             <div class="dropdown-container">
-                <a href="CATEGORIES.php" class="menu-btn">☰ CATEGORIES</a>
+                <a href="" class="menu-btn">☰ CATEGORIES</a>
                 <div class="dropdown-content">
-                    
+                    <a href="CATEGORY_PRODUCTS.php?category=Bedroom">Bedroom</a>
+                    <a href="CATEGORY_PRODUCTS.php?category=Living Room">Living Room</a>
+                    <a href="CATEGORY_PRODUCTS.php?category=Dining Room">Dining Room</a>
+                    <a href="CATEGORY_PRODUCTS.php?category=Study Room">Study Room</a>
+                    <a href="CATEGORY_PRODUCTS.php?category=Home Living">Home Living</a>
+                    <a href="CATEGORY_PRODUCTS.php?category=Office">Office</a>
                 </div>
             </div>
             

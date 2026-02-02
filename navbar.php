@@ -2,7 +2,30 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+$nav_cart_count = 0;
+$nav_cart_total = 0;
+
+if (isset($_SESSION['user_id']) && isset($conn)) {
+    $uid = $_SESSION['user_id'];
+    
+    // 修正：使用 product_id
+    $sql_nav = "SELECT cart.quantity, products.price 
+                FROM cart 
+                JOIN products ON cart.product_id = products.product_id 
+                WHERE cart.user_id = $uid";
+    
+    $result_nav = $conn->query($sql_nav);
+    
+    if ($result_nav && $result_nav->num_rows > 0) {
+        while ($row = $result_nav->fetch_assoc()) {
+            $nav_cart_count += $row['quantity'];
+            $nav_cart_total += ($row['quantity'] * $row['price']);
+        }
+    }
+}
 ?>
+
 <header class="navbar">
     <div class="top-nav">
         <div class="container flex-between">
@@ -21,7 +44,7 @@ if (session_status() === PHP_SESSION_NONE) {
         <div class="container flex-between">
             <div class="logo">
                 <div class="logo-box">D</div>
-                <div class="logo-text">DOMEA</div>
+                <div class="logo-text">Domea</div>
             </div>
             
             <div class="search-section">
@@ -30,17 +53,31 @@ if (session_status() === PHP_SESSION_NONE) {
                     <button class="search-icon"><img src="img/Search.png" alt="🔍" style="width:30px; height:30px;"></button>
                 </div>
             </div>
-            <div class="user-info">
-                <div class="login-reg">
-                    <?php 
-                    if (isset($_SESSION['user_id'])): 
-                    ?>
-                        <a href="USER-DASHBOARD.php"><span style="color: #5eb4a1; margin-right: 10px;">Hello, <?php echo $_SESSION['username']; ?></span></a>
-                        <a href="logout.php"> logout</a>
+
+            <div class="user-info" style="display: flex; align-items: center; gap: 20px;">
+                
+                <div class="login-reg" style="display: flex; align-items: center;">
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <a href="USER-DASHBOARD.php" style="text-decoration: none; color: #333; font-weight: 600;">MY PROFILE</a>
+                        <span style="margin: 0 10px; color: #ccc;">|</span>
+                        <a href="logout.php" style="color: #e74c3c; text-decoration: none; font-weight: 600;">LOGOUT</a>
                     <?php else: ?>
                         <a href="LOGIN-REGISTER.php">LOGIN / REGISTER</a>
                     <?php endif; ?>
                 </div>
+
+                <a href="CART.php" class="cart-box" style="text-decoration: none; display: flex; align-items: center; color: #333;">
+                    <div style="position: relative;">
+                        <img src="img/cart-icon.png" alt="Cart" style="width: 25px; height: 25px;"> 
+                        <span style="position: absolute; top: -8px; right: -8px; background: #20c997; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold;">
+                            <?php echo $nav_cart_count; ?>
+                        </span>
+                    </div>
+                    <span class="cart-amount" style="margin-left: 8px; font-weight: 500;">
+                        RM <?php echo number_format($nav_cart_total, 2); ?>
+                    </span>
+                </a>
+
             </div>
         </div>
     </div>
@@ -126,3 +163,37 @@ if (session_status() === PHP_SESSION_NONE) {
         }
     </style>
 </header>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // 定义 Toast 风格 (右上角, 3秒消失)
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    });
+
+    <?php 
+    // 1. 检查 Session 里的消息 (add_to_cart, reviews 等用这个)
+    if (isset($_SESSION['swal'])) {
+        $type = $_SESSION['swal']['type'];
+        $title = $_SESSION['swal']['title'];
+        $text = $_SESSION['swal']['text'];
+        echo "Toast.fire({ icon: '$type', title: '$title', text: '$text' });";
+        unset($_SESSION['swal']); // 弹完就销毁
+    }
+    
+    // 2. 检查 URL 里的 success=1 (修改资料用这个)
+    if (isset($_GET['success']) && $_GET['success'] == 1) {
+        // ★★★ 修复点：这里原来漏了 echo 和引号，现在加上了 ★★★
+        echo "Toast.fire({ icon: 'success', title: 'Success!', text: 'Profile updated successfully!' });";
+        echo "window.history.replaceState(null, null, window.location.pathname);";
+    }
+    ?>
+</script>

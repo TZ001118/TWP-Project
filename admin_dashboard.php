@@ -11,31 +11,51 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
 // --- 数据获取逻辑 ---
 
 // 1. 统计数据
+// A. 总订单数
 $sql_orders = "SELECT COUNT(DISTINCT order_id) as total_orders FROM orders"; 
 $result_orders = $conn->query($sql_orders);
 $total_orders = $result_orders->fetch_assoc()['total_orders'];
 
-$sql_revenue = "SELECT SUM(price) as total_revenue FROM orders WHERE status != 'Cancelled'";
+// B. 总收入 (修正：统计 grand_total)
+$sql_revenue = "SELECT SUM(grand_total) as total_revenue FROM orders WHERE status != 'Cancelled'";
 $result_revenue = $conn->query($sql_revenue);
 $total_revenue = $result_revenue->fetch_assoc()['total_revenue'] ?? 0;
 
+// C. 总用户数
 $sql_users = "SELECT COUNT(*) as total_users FROM users WHERE role='customer'";
 $result_users = $conn->query($sql_users);
 $total_users = $result_users->fetch_assoc()['total_users'];
 
-// 2. 获取最近订单 (多商品合并显示逻辑)
+// D. ★★★ 补上缺少的：待处理订单数 ★★★
+$sql_pending = "SELECT COUNT(*) as pending_count FROM orders WHERE status = 'Pending'";
+$result_pending = $conn->query($sql_pending);
+$pending_orders = $result_pending->fetch_assoc()['pending_count'] ?? 0;
+
+
+// 2. 获取最近订单 (关联 order_items 获取商品名，直接读取 grand_total)
 $sql_recent = "
     SELECT 
-        order_id, 
-        customer_name, 
-        SUM(price) as total_price, 
-        status, 
-        MAX(order_date) as order_date,
-        GROUP_CONCAT(product_name SEPARATOR ', ') as product_summary,
-        COUNT(product_name) as item_count
-    FROM orders 
-    GROUP BY order_id 
-    ORDER BY order_date DESC 
+        o.id,
+        o.order_id, 
+        o.customer_name, 
+        o.grand_total,  -- ✅ 改用 grand_total
+        o.status, 
+        o.order_date,
+        -- 子查询：获取商品名称拼接
+        (
+            SELECT GROUP_CONCAT(p.product_name SEPARATOR ', ')
+            FROM order_items oi
+            JOIN products p ON oi.product_id = p.product_id
+            WHERE oi.order_id = o.id
+        ) as product_summary,
+        -- 子查询：获取商品数量
+        (
+            SELECT SUM(oi.quantity)
+            FROM order_items oi
+            WHERE oi.order_id = o.id
+        ) as item_count
+    FROM orders o
+    ORDER BY o.order_date DESC 
     LIMIT 5
 ";
 $recent_orders = $conn->query($sql_recent);
@@ -69,28 +89,23 @@ $recent_orders = $conn->query($sql_recent);
             </div>
             
             <div class="list-group list-group-flush">
-                <a href="#" class="list-group-item list-group-item-action active">
-                    <i class="bi bi-grid-1x2-fill me-3"></i>
-                    <span class="sidebar-text">Dashboard</span> 
+                <a href="admin_dashboard.php" class="list-group-item list-group-item-action active">
+                    <i class="bi bi-grid-1x2-fill me-3"></i><span class="sidebar-text">Dashboard</span> 
                 </a>
                 <a href="admin_orders.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-cart3 me-3"></i>
-                    <span class="sidebar-text">Orders</span> 
+                    <i class="bi bi-cart3 me-3"></i><span class="sidebar-text">Orders</span> 
                 </a>
                 <a href="admin_categories.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-tags-fill me-3"></i><span class="sidebar-text">Categories</span> 
                 </a>
                 <a href="admin_products.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-bag-check me-3"></i>
-                    <span class="sidebar-text">Products</span> 
+                    <i class="bi bi-bag-check me-3"></i><span class="sidebar-text">Products</span> 
                 </a>
                 <a href="admin_customers.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-people-fill me-3"></i>
-                    <span class="sidebar-text">Customers</span> 
+                    <i class="bi bi-people-fill me-3"></i><span class="sidebar-text">Customers</span> 
                 </a>
                 <a href="admin_reports.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-graph-up-arrow me-3"></i>
-                    <span class="sidebar-text">Reports</span> 
+                    <i class="bi bi-graph-up-arrow me-3"></i><span class="sidebar-text">Reports</span> 
                 </a>
                 <a href="admin_profile.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-person-circle me-3"></i><span class="sidebar-text">Admin Profile</span>
@@ -127,28 +142,28 @@ $recent_orders = $conn->query($sql_recent);
                     <div class="col-12 col-md-6 col-lg-3">
                         <div class="card stat-card bg-custom-primary text-white h-100">
                             <div class="card-body">
-                                <div><p class="mb-0 opacity-75">Total Orders Customer</p><h3 class="fw-bold mb-0"><?php echo $total_orders; ?></h3></div>
+                                <div><p class="mb-0 opacity-75">Total Orders</p><h3 class="fw-bold mb-0"><?php echo $total_orders; ?></h3></div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-md-6 col-lg-3">
                         <div class="card stat-card bg-custom-success text-white h-100">
                             <div class="card-body">
-                                <div><p class="mb-0 opacity-75">Total Revenue</p><h3 class="fw-bold mb-0">$<?php echo number_format($total_revenue, 2); ?></h3></div>
+                                <div><p class="mb-0 opacity-75">Total Revenue</p><h3 class="fw-bold mb-0">RM <?php echo number_format($total_revenue, 2); ?></h3></div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-md-6 col-lg-3">
                         <div class="card stat-card bg-custom-warning text-white h-100">
                             <div class="card-body">
-                                <div><p class="mb-0 opacity-75">Total Users</p><h3 class="fw-bold mb-0"><?php echo $total_users; ?></h3></div>
+                                <div><p class="mb-0 opacity-75">Total Customers</p><h3 class="fw-bold mb-0"><?php echo $total_users; ?></h3></div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-md-6 col-lg-3">
                         <div class="card stat-card bg-custom-danger text-white h-100">
                             <div class="card-body">
-                                <div><p class="mb-0 opacity-75">Pending Issues</p><h3 class="fw-bold mb-0">0</h3></div>
+                                <div><p class="mb-0 opacity-75">Pending Orders</p><h3 class="fw-bold mb-0"><?php echo $pending_orders; ?></h3></div>
                             </div>
                         </div>
                     </div>
@@ -165,7 +180,8 @@ $recent_orders = $conn->query($sql_recent);
                                     <tr>
                                         <th class="ps-4">Order ID</th>
                                         <th>Customer</th>
-                                        <th>Products (Summary)</th> <th>Total Price</th>
+                                        <th>Products (Summary)</th> 
+                                        <th>Total Price</th>
                                         <th>Date</th>
                                         <th>Status</th>
                                         <th>Action</th>
@@ -185,17 +201,20 @@ $recent_orders = $conn->query($sql_recent);
                                             $products = $row['product_summary'];
                                             $item_count = $row['item_count'];
                                             
-                                            if ($item_count > 1) {
+                                            // 智能显示商品名
+                                            if (empty($products)) {
+                                                $display_product = '<span class="text-muted small">Checking details...</span>';
+                                            } elseif ($item_count > 1) {
                                                 $display_product = '<span class="badge bg-light text-dark border me-1">' . $item_count . ' Items</span> ' . mb_strimwidth($products, 0, 30, "...");
                                             } else {
-                                                $display_product = $products;
+                                                $display_product = mb_strimwidth($products, 0, 40, "...");
                                             }
                                     ?>
                                     <tr>
-                                        <td class="ps-4 fw-bold">#<?php echo str_pad($row['order_id'], 3, '0', STR_PAD_LEFT); ?></td>
+                                        <td class="ps-4 fw-bold">#<?php echo $row['order_id']; ?></td>
                                         <td><?php echo $row['customer_name']; ?></td>
                                         <td class="text-secondary"><?php echo $display_product; ?></td>
-                                        <td class="fw-bold">$<?php echo number_format($row['total_price'], 2); ?></td>       
+                                        <td class="fw-bold">RM <?php echo number_format($row['grand_total'], 2); ?></td>       
                                         <td class="text-muted small"><?php echo $date; ?></td>
                                         <td><span class="badge <?php echo $badge_class; ?> bg-opacity-10 px-3 py-2 rounded-pill"><?php echo $row['status']; ?></span></td>
                                         <td>

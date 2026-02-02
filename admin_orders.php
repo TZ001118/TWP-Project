@@ -17,10 +17,10 @@ $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['searc
 $status_filter = isset($_GET['status']) ? $_GET['status'] : '';
 
 // --- 3. 构建查询条件 (Where Clause) ---
-// 我们把 WHERE 条件提取出来，方便同时用于"查数据"和"算总数"
 $where_sql = "WHERE 1=1";
 
 if (!empty($search)) {
+    // 搜索订单号或客户名
     $where_sql .= " AND (customer_name LIKE '%$search%' OR order_id LIKE '%$search%') ";
 }
 if (!empty($status_filter)) {
@@ -28,26 +28,37 @@ if (!empty($status_filter)) {
 }
 
 // --- 4. 计算总条数 (用于分页按钮) ---
-// 注意：因为订单有 GROUP BY，所以计算总数要用 COUNT(DISTINCT order_id)
-$count_sql = "SELECT COUNT(DISTINCT order_id) as total FROM orders $where_sql";
+$count_sql = "SELECT COUNT(*) as total FROM orders $where_sql";
 $count_result = $conn->query($count_sql);
 $total_records = $count_result->fetch_assoc()['total'];
 $total_pages = ceil($total_records / $limit);
 
-// --- 5. 获取当前页数据 ---
+// --- 5. ★★★ 修正后的查询逻辑 ★★★ ---
+// 我们直接查 orders 表，然后用子查询去关联商品名，这样最稳
 $sql = "
     SELECT 
-        order_id, 
-        customer_name, 
-        SUM(price) as total_price, 
-        status, 
-        MAX(order_date) as order_date,
-        GROUP_CONCAT(product_name SEPARATOR ', ') as product_summary,
-        COUNT(product_name) as item_count
-    FROM orders 
+        o.id,           -- 数据库自增ID (用于关联)
+        o.order_id,     -- 显示用的订单号 (ORD-XXX)
+        o.customer_name,
+        o.grand_total,  -- ✅ 直接读取总价，不用 SUM
+        o.status,
+        o.order_date,
+        -- 子查询：获取该订单下的所有商品名拼接
+        (
+            SELECT GROUP_CONCAT(p.product_name SEPARATOR ', ')
+            FROM order_items oi
+            JOIN products p ON oi.product_id = p.product_id
+            WHERE oi.order_id = o.id
+        ) as product_summary,
+        -- 子查询：获取该订单有多少件商品
+        (
+            SELECT SUM(oi.quantity)
+            FROM order_items oi
+            WHERE oi.order_id = o.id
+        ) as item_count
+    FROM orders o
     $where_sql
-    GROUP BY order_id 
-    ORDER BY order_date DESC 
+    ORDER BY o.order_date DESC 
     LIMIT $offset, $limit
 ";
 
@@ -142,16 +153,21 @@ $result = $conn->query($sql);
                                     <?php if ($result && $result->num_rows > 0): ?>
                                         <?php while($row = $result->fetch_assoc()): ?>
                                         <tr>
-                                            <td class="ps-4 fw-bold">#<?php echo str_pad($row['order_id'], 3, '0', STR_PAD_LEFT); ?></td>
+                                            <td class="ps-4 fw-bold">#<?php echo $row['order_id']; ?></td>
                                             <td><?php echo $row['customer_name']; ?></td>
                                             <td class="text-secondary">
                                                 <?php 
-                                                    echo ($row['item_count'] > 1) 
-                                                    ? '<span class="badge bg-light text-dark border me-1">' . $row['item_count'] . ' Items</span> ' . mb_strimwidth($row['product_summary'], 0, 30, "...")
-                                                    : $row['product_summary']; 
+                                                    // 显示商品摘要
+                                                    if (!empty($row['product_summary'])) {
+                                                        echo ($row['item_count'] > 1) 
+                                                        ? '<span class="badge bg-light text-dark border me-1">' . $row['item_count'] . ' Items</span> ' . mb_strimwidth($row['product_summary'], 0, 30, "...")
+                                                        : $row['product_summary'];
+                                                    } else {
+                                                        echo '<span class="text-muted small">No items</span>';
+                                                    }
                                                 ?>
                                             </td>
-                                            <td class="fw-bold">$<?php echo number_format($row['total_price'], 2); ?></td>       
+                                            <td class="fw-bold">RM <?php echo number_format($row['grand_total'], 2); ?></td>       
                                             <td class="text-muted small"><?php echo date("M d, Y", strtotime($row['order_date'])); ?></td>
                                             <td>
                                                 <?php 

@@ -16,13 +16,9 @@ if (!isset($_GET['id'])) {
 }
 $order_id = mysqli_real_escape_string($conn, $_GET['id']);
 
-// --- 3. 处理表单提交 ---
-
-// A. 更新状态
+// --- 3. 处理表单提交 (更新状态) ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
     $new_status = $_POST['status'];
-    
-    // 如果提交了发货信息
     $tracking = isset($_POST['tracking_number']) ? mysqli_real_escape_string($conn, $_POST['tracking_number']) : '';
     $courier = isset($_POST['courier']) ? mysqli_real_escape_string($conn, $_POST['courier']) : '';
     
@@ -37,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
     exit();
 }
 
-// B. 取消订单
+// 处理取消订单
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cancel_order'])) {
     $cancel_sql = "UPDATE orders SET status = 'Cancelled' WHERE order_id = '$order_id'";
     if ($conn->query($cancel_sql)) {
@@ -47,23 +43,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cancel_order'])) {
     exit();
 }
 
-// --- 4. 获取订单详情 ---
-$sql = "SELECT * FROM orders WHERE order_id = '$order_id'";
-$result = $conn->query($sql);
+// --- 4. ★★★ 修正后的查询逻辑 ★★★ ---
 
-if ($result->num_rows == 0) {
+// 第一步：获取订单主体信息 (Main Order Info)
+$sql_order = "SELECT * FROM orders WHERE order_id = '$order_id'";
+$res_order = $conn->query($sql_order);
+
+if ($res_order->num_rows == 0) {
     $_SESSION['swal'] = ['type' => 'error', 'title' => 'Not Found', 'text' => 'Order Not Found!'];
     header("Location: admin_orders.php");
     exit();
 }
 
+$main_info = $res_order->fetch_assoc();
+$internal_id = $main_info['id']; // 获取数据库自增 ID (int)，用于关联商品表
+
+// 第二步：获取订单商品详情 (Order Items + Products)
+// 我们需要把 order_items 和 products 表连接起来，才能拿到图片和商品名
+$sql_items = "SELECT oi.*, p.product_name, p.product_image 
+              FROM order_items oi 
+              JOIN products p ON oi.product_id = p.product_id 
+              WHERE oi.order_id = '$internal_id'";
+
+$res_items = $conn->query($sql_items);
 $order_items = [];
-while ($row = $result->fetch_assoc()) {
+while ($row = $res_items->fetch_assoc()) {
     $order_items[] = $row;
 }
 
-// 提取公共信息
-$main_info = $order_items[0];
 $customer_name = $main_info['customer_name'];
 $order_date = date("d M Y, h:i A", strtotime($main_info['order_date']));
 $current_status = $main_info['status'];
@@ -83,7 +90,6 @@ $current_status = $main_info['status'];
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* 打印样式控制 */
         @media print {
             .no-print { display: none !important; }
             .card { border: 1px solid #ddd !important; box-shadow: none !important; margin-bottom: 20px; }
@@ -165,8 +171,8 @@ $current_status = $main_info['status'];
                            style="position: relative; z-index: 1050;">
                             <i class="bi bi-arrow-left"></i> Back to Orders
                         </a>
-                        <h2 class="fw-bold text-dark m-0 invoice-title">Invoice #<?php echo str_pad($order_id, 3, '0', STR_PAD_LEFT); ?></h2>
-                        <h2 class="fw-bold text-dark m-0 packing-title">Packing Slip #<?php echo str_pad($order_id, 3, '0', STR_PAD_LEFT); ?></h2>
+                        <h2 class="fw-bold text-dark m-0 invoice-title">Invoice #<?php echo $order_id; ?></h2>
+                        <h2 class="fw-bold text-dark m-0 packing-title">Packing Slip #<?php echo $order_id; ?></h2>
                     </div>
                     <div class="d-flex gap-2 no-print">
                         <button onclick="printPackingSlip()" class="btn btn-outline-dark"><i class="bi bi-box-seam me-2"></i>Print Packing Slip</button>
@@ -193,39 +199,47 @@ $current_status = $main_info['status'];
                                         </thead>
                                         <tbody>
                                             <?php 
-                                            $grand_total = 0;
+                                            // 重新计算总价 (基于 order_items)
+                                            $calculated_total = 0;
                                             foreach($order_items as $item): 
                                                 $subtotal = $item['price'] * $item['quantity'];
-                                                $grand_total += $subtotal;
+                                                $calculated_total += $subtotal;
                                             ?>
                                             <tr>
                                                 <td class="ps-4">
                                                     <div class="d-flex align-items-center">
-                                                        <img src="img/<?php echo $item['product_image'] ? $item['product_image'] : 'default_product.png'; ?>" class="product-thumb me-3" alt="Product">
+                                                        <img src="img/<?php echo !empty($item['product_image']) ? $item['product_image'] : 'default_product.png'; ?>" class="product-thumb me-3" alt="Product">
                                                         <div>
-                                                            <div class="fw-bold"><?php echo $item['product_name']; ?></div>
-                                                            <div class="small text-muted">Variant: <?php echo $item['product_variant']; ?></div>
+                                                            <div class="fw-bold"><?php echo htmlspecialchars($item['product_name']); ?></div>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td class="text-center price-col">$<?php echo number_format($item['price'], 2); ?></td>
+                                                <td class="text-center price-col">RM <?php echo number_format($item['price'], 2); ?></td>
                                                 <td class="text-center">x <?php echo $item['quantity']; ?></td>
-                                                <td class="text-end pe-4 fw-bold price-col">$<?php echo number_format($subtotal, 2); ?></td>
+                                                <td class="text-end pe-4 fw-bold price-col">RM <?php echo number_format($subtotal, 2); ?></td>
                                             </tr>
                                             <?php endforeach; ?>
                                         </tbody>
                                         <tfoot class="bg-light price-col">
                                             <tr>
-                                                <td colspan="3" class="text-end fw-bold pt-3">Subtotal:</td>
-                                                <td class="text-end pe-4 pt-3">$<?php echo number_format($grand_total, 2); ?></td>
+                                                <td colspan="3" class="text-end fw-bold pt-3">Items Subtotal:</td>
+                                                <td class="text-end pe-4 pt-3">RM <?php echo number_format($calculated_total, 2); ?></td>
                                             </tr>
+                                            <?php 
+                                                $db_grand_total = $main_info['grand_total'];
+                                                $extra_cost = $db_grand_total - $calculated_total; 
+                                                // 简单的逻辑：如果总价 > 商品价，剩下的就是运费+税
+                                            ?>
+                                            <?php if($extra_cost > 0): ?>
                                             <tr>
-                                                <td colspan="3" class="text-end fw-bold border-0">Shipping:</td>
-                                                <td class="text-end pe-4 border-0">$0.00</td>
+                                                <td colspan="3" class="text-end fw-bold border-0">Shipping & Tax:</td>
+                                                <td class="text-end pe-4 border-0">RM <?php echo number_format($extra_cost, 2); ?></td>
                                             </tr>
+                                            <?php endif; ?>
+                                            
                                             <tr>
                                                 <td colspan="3" class="text-end fw-bold fs-5 border-0 pb-3">Grand Total:</td>
-                                                <td class="text-end pe-4 fw-bold fs-5 text-success border-0 pb-3">$<?php echo number_format($grand_total, 2); ?></td>
+                                                <td class="text-end pe-4 fw-bold fs-5 text-success border-0 pb-3">RM <?php echo number_format($db_grand_total, 2); ?></td>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -239,20 +253,16 @@ $current_status = $main_info['status'];
                             </div>
                             <div class="card-body">
                                 <div class="row g-3">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <div class="small text-muted">Payment Method</div>
                                         <div class="fw-bold"><?php echo $main_info['payment_method']; ?></div>
                                     </div>
-                                    <div class="col-md-4">
-                                        <div class="small text-muted">Transaction ID</div>
-                                        <div class="fw-bold text-monospace"><?php echo $main_info['transaction_id']; ?></div>
-                                    </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <div class="small text-muted">Payment Status</div>
-                                        <?php if($main_info['payment_status'] == 'Paid'): ?>
+                                        <?php if($main_info['grand_total'] > 0): ?>
                                             <span class="badge bg-success bg-opacity-10 text-success">Paid</span>
                                         <?php else: ?>
-                                            <span class="badge bg-warning bg-opacity-10 text-warning">Unpaid</span>
+                                            <span class="badge bg-warning bg-opacity-10 text-warning">Pending</span>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -306,7 +316,7 @@ $current_status = $main_info['status'];
                                     </div>
                                     <div>
                                         <div class="fw-bold"><?php echo $customer_name; ?></div>
-                                        <div class="small text-muted">ID: #<?php echo $main_info['user_id']; ?></div>
+                                        <div class="small text-muted">User ID: #<?php echo $main_info['user_id']; ?></div>
                                     </div>
                                 </div>
                                 <hr>
@@ -316,12 +326,15 @@ $current_status = $main_info['status'];
                                 </div>
                                 <div class="mb-3">
                                     <div class="small text-muted fw-bold">Shipping Address</div>
-                                    <div>123, Jalan Skudai, Johor Bahru, 81300, Johor.</div>
+                                    <div><?php echo htmlspecialchars($main_info['address']); ?></div>
                                 </div>
-
-                                <div class="alert alert-warning mb-0 p-2 small">
-                                    <i class="bi bi-chat-square-text me-1"></i> <strong>Note:</strong>
-                                    <?php echo $main_info['order_notes'] ? $main_info['order_notes'] : 'No notes provided.'; ?>
+                                <div class="mb-3">
+                                    <div class="small text-muted fw-bold">Phone</div>
+                                    <div><?php echo htmlspecialchars($main_info['phone']); ?></div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="small text-muted fw-bold">Email</div>
+                                    <div><?php echo htmlspecialchars($main_info['email']); ?></div>
                                 </div>
                             </div>
                         </div>
@@ -367,11 +380,9 @@ $current_status = $main_info['status'];
             })
         }
 
-        // 1. 获取元素
         const statusSelect = document.getElementById('statusSelect');
         const fulfillmentInfo = document.getElementById('fulfillmentInfo');
         
-        // 2. 颜色切换函数
         function updateColor(select) {
             select.classList.remove('text-warning', 'border-warning', 'text-success', 'border-success', 'text-danger', 'border-danger', 'text-primary', 'border-primary');
             if (select.value === 'Pending') select.classList.add('text-warning', 'border-warning');
@@ -380,7 +391,6 @@ $current_status = $main_info['status'];
             else if (select.value === 'Shipped') select.classList.add('text-primary', 'border-primary');
         }
 
-        // 3. 监听变化
         if (statusSelect) {
             updateColor(statusSelect);
             statusSelect.addEventListener('change', function() {
@@ -409,4 +419,4 @@ $current_status = $main_info['status'];
         }
 </script>
 </body>
-</html>     
+</html>

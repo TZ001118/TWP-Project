@@ -11,8 +11,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
 // --- 2. 数据统计 (Data Aggregation) ---
 
 // A. 关键指标卡片 (Key Metrics)
-// 总销售额 (排除已取消的)
-$revenue_res = $conn->query("SELECT SUM(price) as total FROM orders WHERE status != 'Cancelled'");
+// ✅ 修正：统计总收入要用 grand_total
+$revenue_res = $conn->query("SELECT SUM(grand_total) as total FROM orders WHERE status != 'Cancelled'");
 $total_revenue = $revenue_res->fetch_assoc()['total'] ?? 0;
 
 // 总订单数
@@ -33,9 +33,9 @@ while ($row = $status_query->fetch_assoc()) {
 }
 
 // C. 图表数据 2：最近 7 天销售趋势 (Line Chart)
-// 注意：这里只会查出有订单的那几天
+// ✅ 修正：趋势图也要用 grand_total
 $trend_query = $conn->query("
-    SELECT DATE(order_date) as date, SUM(price) as daily_total 
+    SELECT DATE(order_date) as date, SUM(grand_total) as daily_total 
     FROM orders 
     WHERE status != 'Cancelled' 
     GROUP BY DATE(order_date) 
@@ -122,7 +122,7 @@ foreach ($rows as $row) {
                         <div class="card border-0 shadow-sm rounded-3 bg-custom-primary text-white h-100">
                             <div class="card-body p-4">
                                 <h6 class="text-uppercase mb-2 text-white-50 small fw-bold">Total Revenue</h6>
-                                <h2 class="fw-bold mb-0">$<?php echo number_format($total_revenue, 2); ?></h2>
+                                <h2 class="fw-bold mb-0">RM <?php echo number_format($total_revenue, 2); ?></h2>
                             </div>
                         </div>
                     </div>
@@ -186,24 +186,22 @@ foreach ($rows as $row) {
         const statusLabels = <?php echo json_encode($status_labels); ?>;
         const statusData = <?php echo json_encode($status_data); ?>;
 
-        // 🟢 重点修改：根据状态名字智能匹配颜色
-        // 不管数据库返回什么顺序，这里都会自动对号入座
         const statusColors = statusLabels.map(label => {
-            if (label === 'Pending') return '#ffc107';   // 🟨 黄色
-            if (label === 'Shipped') return '#0d6efd';   // 🟦 蓝色 (Bootstrap Primary)
-            if (label === 'Completed') return '#198754'; // 🟩 绿色
-            if (label === 'Cancelled') return '#dc3545'; // 🟥 红色
-            return '#6c757d'; // 灰色 (以防万一有其他状态)
+            if (label === 'Pending') return '#ffc107';   
+            if (label === 'Shipped') return '#0d6efd';   
+            if (label === 'Completed') return '#198754'; 
+            if (label === 'Cancelled') return '#dc3545'; 
+            return '#6c757d'; 
         });
 
-        // 2. 绘制销售趋势折线图 (保持不变)
+        // 2. 绘制销售趋势折线图
         const ctx1 = document.getElementById('salesChart').getContext('2d');
         new Chart(ctx1, {
             type: 'line',
             data: {
                 labels: trendLabels,
                 datasets: [{
-                    label: 'Sales ($)',
+                    label: 'Sales (RM)', // 修改标签单位
                     data: trendData,
                     borderColor: '#99d5c5',
                     backgroundColor: 'rgba(153, 213, 197, 0.2)',
@@ -219,7 +217,7 @@ foreach ($rows as $row) {
             }
         });
 
-        // 3. 绘制状态甜甜圈图 (使用新颜色变量)
+        // 3. 绘制状态甜甜圈图
         const ctx2 = document.getElementById('statusChart').getContext('2d');
         new Chart(ctx2, {
             type: 'doughnut',
@@ -227,7 +225,6 @@ foreach ($rows as $row) {
                 labels: statusLabels,
                 datasets: [{
                     data: statusData,
-                    // 👇 这里改成了我们刚才生成的智能颜色数组
                     backgroundColor: statusColors,
                     borderWidth: 0
                 }]

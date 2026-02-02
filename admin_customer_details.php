@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    // B. 重置密码 (新增了规则验证)
+    // B. 重置密码
     if (isset($_POST['reset_password'])) {
         $new_pass = $_POST['new_password'];
         
@@ -69,7 +69,8 @@ $addresses = $conn->query("SELECT * FROM user_addresses WHERE user_id='$user_id'
 
 // 计算统计数据
 $total_orders = $orders->num_rows;
-$total_spent_query = $conn->query("SELECT SUM(price) as total FROM orders WHERE user_id='$user_id' AND status != 'Cancelled'");
+// ✅ 修正：统计消费金额使用 grand_total
+$total_spent_query = $conn->query("SELECT SUM(grand_total) as total FROM orders WHERE user_id='$user_id' AND status != 'Cancelled'");
 $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
 ?>
 
@@ -84,10 +85,9 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
-        /* 密码规则的样式 */
         .password-rule { font-size: 0.85rem; color: #6c757d; transition: all 0.3s; }
-        .password-rule.valid { color: #198754; font-weight: 600; } /* 绿色 */
-        .password-rule.invalid { color: #dc3545; } /* 红色 */
+        .password-rule.valid { color: #198754; font-weight: 600; } 
+        .password-rule.invalid { color: #dc3545; } 
         .password-rule i { margin-right: 5px; }
     </style>
 </head>
@@ -135,7 +135,7 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
                     </div>
                     <div class="d-flex justify-content-between px-3 mt-2">
                         <span class="text-muted">Spent</span>
-                        <span class="fw-bold text-success">$<?php echo number_format($total_spent, 2); ?></span>
+                        <span class="fw-bold text-success">RM <?php echo number_format($total_spent, 2); ?></span>
                     </div>
                 </div>
             </div>
@@ -181,20 +181,11 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
                                     <h6 class="fw-bold text-danger">Security: Reset Password</h6>
                                     <div class="col-md-6">
                                         <input type="text" name="new_password" id="newPassInput" class="form-control" placeholder="Enter new password">
-                                        
                                         <div class="mt-2 bg-light p-2 rounded border">
-                                            <div class="password-rule" id="rule-length">
-                                                <i class="bi bi-circle"></i> At least 12 characters
-                                            </div>
-                                            <div class="password-rule" id="rule-number">
-                                                <i class="bi bi-circle"></i> At least 1 number
-                                            </div>
-                                            <div class="password-rule" id="rule-upper">
-                                                <i class="bi bi-circle"></i> At least 1 uppercase letter (A-Z)
-                                            </div>
-                                            <div class="password-rule" id="rule-special">
-                                            <i class="bi bi-circle"></i> At least 1 special symbol (!@#%^&*)
-                                            </div>
+                                            <div class="password-rule" id="rule-length"><i class="bi bi-circle"></i> At least 12 characters</div>
+                                            <div class="password-rule" id="rule-number"><i class="bi bi-circle"></i> At least 1 number</div>
+                                            <div class="password-rule" id="rule-upper"><i class="bi bi-circle"></i> At least 1 uppercase letter</div>
+                                            <div class="password-rule" id="rule-special"><i class="bi bi-circle"></i> At least 1 special symbol</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6 align-self-start">
@@ -216,7 +207,7 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
                                         <tr>
                                             <td>#<?php echo $o['order_id']; ?></td>
                                             <td><?php echo date("d M Y", strtotime($o['order_date'])); ?></td>
-                                            <td>$<?php echo number_format($o['price'], 2); ?></td>
+                                            <td>RM <?php echo number_format($o['grand_total'], 2); ?></td>
                                             <td><span class="badge bg-secondary"><?php echo $o['status']; ?></span></td>
                                             <td><a href="admin_order_details.php?id=<?php echo $o['order_id']; ?>" class="btn btn-sm btn-link">View</a></td>
                                         </tr>
@@ -232,12 +223,18 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
                                         <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
                                     </thead>
                                     <tbody>
-                                        <?php if($cart->num_rows > 0): while($c = $cart->fetch_assoc()): ?>
+                                        <?php 
+                                        // 购物车查询也需要关联 products 表获取 name 和 price
+                                        // 这里的查询之前可能不完整，我稍微补全一下
+                                        $cart_sql = "SELECT c.*, p.product_name, p.price FROM cart c JOIN products p ON c.product_id = p.product_id WHERE c.user_id='$user_id'";
+                                        $cart_res = $conn->query($cart_sql);
+                                        
+                                        if($cart_res->num_rows > 0): while($c = $cart_res->fetch_assoc()): ?>
                                         <tr>
                                             <td><?php echo $c['product_name']; ?></td>
-                                            <td>$<?php echo number_format($c['price'], 2); ?></td>
+                                            <td>RM <?php echo number_format($c['price'], 2); ?></td>
                                             <td>x <?php echo $c['quantity']; ?></td>
-                                            <td class="fw-bold">$<?php echo number_format($c['price'] * $c['quantity'], 2); ?></td>
+                                            <td class="fw-bold">RM <?php echo number_format($c['price'] * $c['quantity'], 2); ?></td>
                                         </tr>
                                         <?php endwhile; else: echo "<tr><td colspan='4'>Cart is empty.</td></tr>"; endif; ?>
                                     </tbody>
@@ -284,7 +281,6 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
     <script src="admin_script.js"></script>
     
     <script>
-    // SweetAlert logic
     <?php if(isset($_SESSION['swal'])): ?>
         Swal.fire({
             icon: '<?php echo $_SESSION['swal']['type']; ?>',
@@ -300,7 +296,6 @@ $total_spent = $total_spent_query->fetch_assoc()['total'] ?? 0;
     <?php endif; ?>
 
     document.addEventListener('DOMContentLoaded', function() {
-        // ... (原有的密码规则 JS 保持不变)
         const passInput = document.getElementById('newPassInput');
         const ruleLength = document.getElementById('rule-length');
         const ruleNumber = document.getElementById('rule-number');

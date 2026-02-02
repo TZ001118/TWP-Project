@@ -1,7 +1,9 @@
 <?php 
+session_start(); // 开启 Session，否则购物车无法识别用户
 include 'db_conn.php';
 $current_page = 'furniture';
 
+// 获取最高价格用于筛选条
 $max_price_sql = "SELECT MAX(price) AS max_p FROM products";
 $max_res = $conn->query($max_price_sql);
 $row_max = $max_res->fetch_assoc();
@@ -11,9 +13,10 @@ $cat_filter = isset($_GET['cat']) ? $_GET['cat'] : 'all';
 $price_filter = isset($_GET['max_p']) ? $_GET['max_p'] : $absolute_max;
 $sort_filter = isset($_GET['sort']) ? $_GET['sort'] : 'latest';
 
+// 构建查询
 $sql = "SELECT p.*, c.category_name FROM products p 
         LEFT JOIN categories c ON p.category_id = c.category_id 
-        WHERE p.price <= $price_filter";
+        WHERE p.price <= $price_filter AND p.status = 'Active'";
 
 if ($cat_filter !== 'all') {
     $sql .= " AND c.category_name = '$cat_filter'";
@@ -44,7 +47,7 @@ $results = $conn->query($sql);
     <div class="furniture-layout">
         <aside class="filter-sidebar">
             <form action="FURNITURE.php" method="GET">
-                <input type="hidden" name="cat" value="<?php echo $cat_filter; ?>">
+                <input type="hidden" name="cat" value="<?php echo htmlspecialchars($cat_filter); ?>">
                 
                 <div class="filter-section">
                     <h3>Filter by Price</h3>
@@ -78,10 +81,10 @@ $results = $conn->query($sql);
 
         <main class="main-content">
             <div class="content-header">
-                <h2><?php echo ($cat_filter == 'all') ? 'All Products' : $cat_filter; ?></h2>
+                <h2><?php echo ($cat_filter == 'all') ? 'All Products' : htmlspecialchars($cat_filter); ?></h2>
                 <div class="sort-box">
                     <label>Sort by:</label>
-                    <select onchange="location.href='FURNITURE.php?cat=<?php echo $cat_filter; ?>&max_p=<?php echo $price_filter; ?>&sort='+this.value">
+                    <select onchange="location.href='FURNITURE.php?cat=<?php echo urlencode($cat_filter); ?>&max_p=<?php echo $price_filter; ?>&sort='+this.value">
                         <option value="latest" <?php echo ($sort_filter=='latest')?'selected':''; ?>>Latest Arrival</option>
                         <option value="low" <?php echo ($sort_filter=='low')?'selected':''; ?>>Price: Low to High</option>
                         <option value="high" <?php echo ($sort_filter=='high')?'selected':''; ?>>Price: High to Low</option>
@@ -90,17 +93,27 @@ $results = $conn->query($sql);
             </div>
 
             <div class="product-grid">
-                <?php if ($results->num_rows > 0): ?>
+                <?php if ($results && $results->num_rows > 0): ?>
                     <?php while($row = $results->fetch_assoc()): ?>
                         <div class="product-item">
-                            <img src="<?php echo $row['image_url']; ?>" alt="Furniture">
-                            <div class="product-name"><?php echo $row['product_name']; ?></div>
+                            
+                            <a href="PRODUCT_DETAILS.php?id=<?php echo $row['product_id']; ?>&from=furniture" style="text-decoration:none; color:inherit;">
+                                <img src="img/<?php echo $row['product_image']; ?>" alt="<?php echo htmlspecialchars($row['product_name']); ?>">
+                                <div class="product-name"><?php echo htmlspecialchars($row['product_name']); ?></div>
+                            </a>
+
                             <div class="product-price">RM <?php echo number_format($row['price'], 2); ?></div>
-                            <button class="btn-filter" style="margin-top:15px; background:#333;">ADD TO CART</button>
+                            
+                            <form action="add_to_cart.php" method="POST">
+                                <input type="hidden" name="product_id" value="<?php echo $row['product_id']; ?>">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn-filter" style="margin-top:15px; background:#333; width:100%; cursor:pointer;">ADD TO CART</button>
+                            </form>
+
                         </div>
                     <?php endwhile; ?>
                 <?php else: ?>
-                    <p style="padding: 50px; text-align: center; color: #999;">No furniture found matching your criteria.</p>
+                    <p style="padding: 50px; text-align: center; color: #999; grid-column: 1/-1;">No furniture found matching your criteria.</p>
                 <?php endif; ?>
             </div>
         </main>

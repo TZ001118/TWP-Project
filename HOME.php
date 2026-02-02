@@ -94,10 +94,10 @@ if (session_status() === PHP_SESSION_NONE) {
                     <div class="hotspot-container">
                         <img src="img\Home\BB1.png" alt="Shop the look" class="main-bg">
 
-                        <div class="hotspot" style="top: 53%; left: 28%;">
+                        <div class="hotspot" style="top: 45%; left: 32%;">
                             <div class="hotspot-dot"></div>
                             <div class="hotspot-card">
-                                <img src="img/Home/A1.png" alt="Product 1">
+                                <img src="img/Home/B3.png" alt="Product 1">
                                 <div class="card-info">
                                     <h4>Fluted Sliding Door Sideboard</h4>
                                     <p class="price"><span class="old-price">RM 1,782</span> RM 998</p>
@@ -106,10 +106,10 @@ if (session_status() === PHP_SESSION_NONE) {
                             </div>
                         </div>
 
-                        <div class="hotspot" style="top: 40%; left: 79%;">
+                        <div class="hotspot" style="top: 70%; left: 79%;">
                             <div class="hotspot-dot"></div>
                             <div class="hotspot-card">
-                                <img src="img/Home/A3.png" alt="Product 2">
+                                <img src="img/Home/B1.png" alt="Product 2">
                                 <div class="card-info">
                                     <h4>Modern Oak Sideboard</h4>
                                     <p class="price">RM 1,200</p>
@@ -118,10 +118,10 @@ if (session_status() === PHP_SESSION_NONE) {
                             </div>
                         </div>
                         
-                        <div class="hotspot" style="top: 65%; left: 48%;">
+                        <div class="hotspot" style="top: 55%; left: 58%;">
                             <div class="hotspot-dot"></div>
                             <div class="hotspot-card">
-                                <img src="img/Home/A2.png" alt="Product 3">
+                                <img src="img/Home/B2.png" alt="Product 3">
                                 <div class="card-info">
                                     <h4>Cozy Lounge Chair</h4>
                                     <p class="price">RM 450</p>
@@ -130,10 +130,10 @@ if (session_status() === PHP_SESSION_NONE) {
                             </div>
                         </div>
 
-                        <div class="hotspot" style="top: 65%; left: 48%;">
+                        <div class="hotspot" style="top: 72%; left: 23%;">
                             <div class="hotspot-dot"></div>
                             <div class="hotspot-card">
-                                <img src="img/Home/A2.png" alt="Product 3">
+                                <img src="img/Home/B4.png" alt="Product 3">
                                 <div class="card-info">
                                     <h4>Cozy Lounge Chair</h4>
                                     <p class="price">RM 450</p>

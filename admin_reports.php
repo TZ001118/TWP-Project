@@ -84,6 +84,7 @@ foreach ($rows as $row) {
             <div class="list-group list-group-flush">
                 <a href="admin_dashboard.php" class="list-group-item list-group-item-action"><i class="bi bi-grid-1x2-fill me-3"></i><span class="sidebar-text">Dashboard</span></a>
                 <a href="admin_orders.php" class="list-group-item list-group-item-action"><i class="bi bi-cart3 me-3"></i><span class="sidebar-text">Orders</span></a>
+                <a href="admin_custom_requests.php" class="list-group-item list-group-item-action"><i class="bi bi-tools me-3"></i><span class="sidebar-text">Custom Requests</span> </a>
                 <a href="admin_categories.php" class="list-group-item list-group-item-action"><i class="bi bi-tags-fill me-3"></i><span class="sidebar-text">Categories</span></a>
                 <a href="admin_products.php" class="list-group-item list-group-item-action"><i class="bi bi-bag-check-fill me-3"></i><span class="sidebar-text">Products</span></a>
                 <a href="admin_customers.php" class="list-group-item list-group-item-action"><i class="bi bi-people-fill me-3"></i><span class="sidebar-text">Customers</span></a>

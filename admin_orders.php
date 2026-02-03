@@ -74,6 +74,7 @@ $result = $conn->query($sql);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="admin_style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <script>
@@ -91,6 +92,9 @@ $result = $conn->query($sql);
             <div class="list-group list-group-flush">
                 <a href="admin_dashboard.php" class="list-group-item list-group-item-action"><i class="bi bi-grid-1x2-fill me-3"></i><span class="sidebar-text">Dashboard</span></a>
                 <a href="admin_orders.php" class="list-group-item list-group-item-action active"><i class="bi bi-cart3 me-3"></i><span class="sidebar-text">Orders</span></a>
+                <a href="admin_custom_requests.php" class="list-group-item list-group-item-action">
+                    <i class="bi bi-tools me-3"></i><span class="sidebar-text">Custom Requests</span> 
+                </a>
                 <a href="admin_categories.php" class="list-group-item list-group-item-action"><i class="bi bi-tags-fill me-3"></i><span class="sidebar-text">Categories</span></a>
                 <a href="admin_products.php" class="list-group-item list-group-item-action"><i class="bi bi-bag-check-fill me-3"></i><span class="sidebar-text">Products</span></a>
                 <a href="admin_customers.php" class="list-group-item list-group-item-action"><i class="bi bi-people-fill me-3"></i><span class="sidebar-text">Customers</span></a>

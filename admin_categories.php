@@ -14,56 +14,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_category'])) {
     $cat_status = $_POST['status'];
     
     // 处理图片上传
-    $image_name = 'default_category.png'; // 默认图
+    $image_name = 'default_category.png'; 
     if (isset($_FILES['category_image']) && $_FILES['category_image']['error'] == 0) {
-        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         $filename = $_FILES['category_image']['name'];
         $filetype = pathinfo($filename, PATHINFO_EXTENSION);
         if (in_array(strtolower($filetype), $allowed)) {
             $new_filename = "cat_" . time() . "." . $filetype;
-            move_uploaded_file($_FILES['category_image']['tmp_name'], "img/" . $new_filename);
-            $image_name = $new_filename;
+            if (move_uploaded_file($_FILES['category_image']['tmp_name'], "img/" . $new_filename)) {
+                $image_name = $new_filename;
+            }
         }
     }
 
+    // 优化的 SQL：直接插入，依靠数据库默认值处理 created_at
     $sql = "INSERT INTO categories (category_name, category_image, status) VALUES ('$cat_name', '$image_name', '$cat_status')";
     
     if ($conn->query($sql)) {
-        $_SESSION['swal'] = [
-            'type' => 'success',
-            'title' => 'Success!',
-            'text' => 'Category added successfully!'
-        ];
-        header("Location: admin_categories.php");
-        exit();
+        $_SESSION['swal'] = ['type' => 'success', 'title' => 'Success!', 'text' => 'Category added successfully!'];
     } else {
-        $_SESSION['swal'] = [
-            'type' => 'error',
-            'title' => 'Error!',
-            'text' => 'Error adding category.'
-        ];
-        header("Location: admin_categories.php");
-        exit();
+        $_SESSION['swal'] = ['type' => 'error', 'title' => 'Error!', 'text' => 'Database error: ' . $conn->error];
     }
+    
+    // 使用 JS 跳转强制刷新页面并清除 POST 状态，解决闪烁死循环
+    echo "<script>window.location.href='admin_categories.php';</script>";
+    exit();
 }
 
 // 3. 处理删除分类 (Delete Category)
 if (isset($_GET['delete_id'])) {
-    $del_id = $_GET['delete_id'];
+    $del_id = mysqli_real_escape_string($conn, $_GET['delete_id']);
     if ($conn->query("DELETE FROM categories WHERE category_id='$del_id'")) {
-        $_SESSION['swal'] = [
-            'type' => 'success',
-            'title' => 'Deleted!',
-            'text' => 'Category has been deleted.'
-        ];
+        $_SESSION['swal'] = ['type' => 'success', 'title' => 'Deleted!', 'text' => 'Category has been deleted.'];
     } else {
-        $_SESSION['swal'] = [
-            'type' => 'error',
-            'title' => 'Error!',
-            'text' => 'Could not delete category.'
-        ];
+        $_SESSION['swal'] = ['type' => 'error', 'title' => 'Error!', 'text' => 'Could not delete category.'];
     }
-    header("Location: admin_categories.php");
+    echo "<script>window.location.href='admin_categories.php';</script>";
     exit();
 }
 
@@ -75,6 +61,7 @@ $result = $conn->query("SELECT * FROM categories ORDER BY category_id DESC");
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Categories</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -96,27 +83,14 @@ $result = $conn->query("SELECT * FROM categories ORDER BY category_id DESC");
                 <span class="sidebar-text">DOMEA</span> 
             </div>
             <div class="list-group list-group-flush">
-                <a href="admin_dashboard.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-grid-1x2-fill me-3"></i><span class="sidebar-text">Dashboard</span> 
-                </a>
-                <a href="admin_orders.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-cart3 me-3"></i><span class="sidebar-text">Orders</span> 
-                </a>
-                <a href="admin_categories.php" class="list-group-item list-group-item-action active">
-                    <i class="bi bi-tags-fill me-3"></i><span class="sidebar-text">Categories</span> 
-                </a>
-                <a href="admin_products.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-bag-check me-3"></i><span class="sidebar-text">Products</span> 
-                </a>
-                <a href="admin_customers.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-people-fill me-3"></i><span class="sidebar-text">Customers</span> 
-                </a>
-                <a href="admin_reports.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-graph-up-arrow me-3"></i><span class="sidebar-text">Reports</span> 
-                </a>
-                <a href="admin_profile.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-person-circle me-3"></i><span class="sidebar-text">Admin Profile</span>
-                </a>
+                <a href="admin_dashboard.php" class="list-group-item list-group-item-action"><i class="bi bi-grid-1x2-fill me-3"></i><span class="sidebar-text">Dashboard</span></a>
+                <a href="admin_orders.php" class="list-group-item list-group-item-action"><i class="bi bi-cart3 me-3"></i><span class="sidebar-text">Orders</span></a>
+                <a href="admin_custom_requests.php" class="list-group-item list-group-item-action"><i class="bi bi-tools me-3"></i><span class="sidebar-text">Custom Requests</span></a>
+                <a href="admin_categories.php" class="list-group-item list-group-item-action active"><i class="bi bi-tags-fill me-3"></i><span class="sidebar-text">Categories</span></a>
+                <a href="admin_products.php" class="list-group-item list-group-item-action"><i class="bi bi-bag-check-fill me-3"></i><span class="sidebar-text">Products</span></a>
+                <a href="admin_customers.php" class="list-group-item list-group-item-action"><i class="bi bi-people-fill me-3"></i><span class="sidebar-text">Customers</span></a>
+                <a href="admin_reports.php" class="list-group-item list-group-item-action"><i class="bi bi-graph-up-arrow me-3"></i><span class="sidebar-text">Reports</span></a>
+                <a href="admin_profile.php" class="list-group-item list-group-item-action"><i class="bi bi-person-circle me-3"></i><span class="sidebar-text">Admin Profile</span></a>
             </div>
         </div>
 
@@ -129,11 +103,11 @@ $result = $conn->query("SELECT * FROM categories ORDER BY category_id DESC");
                     </div>
                     <ul class="navbar-nav ms-auto flex-row align-items-center">
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                                 <div class="bg-secondary rounded-circle text-white d-flex justify-content-center align-items-center me-2" style="width: 35px; height: 35px;">AD</div>
-                                <span class="fw-bold d-none d-sm-block"><?php echo isset($_SESSION['username']) ? $_SESSION['username'] : 'Admin'; ?></span>
+                                <span class="fw-bold d-none d-sm-block"><?php echo htmlspecialchars($_SESSION['username'] ?? 'Admin'); ?></span>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 position-absolute">
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                                 <li><a class="dropdown-item" href="admin_profile.php">Profile</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="logout.php">Logout</a></li>
@@ -144,18 +118,15 @@ $result = $conn->query("SELECT * FROM categories ORDER BY category_id DESC");
             </nav>
 
             <div class="container-fluid p-4">
-
                 <div class="row">
                     <div class="col-md-4 mb-4">
                         <div class="card border-0 shadow-sm rounded-3">
-                            <div class="card-header bg-white py-3 border-bottom">
-                                <h5 class="m-0 fw-bold">Add New Category</h5>
-                            </div>
+                            <div class="card-header bg-white py-3 border-bottom"><h5 class="m-0 fw-bold">Add New Category</h5></div>
                             <div class="card-body">
-                                <form action="" method="POST" enctype="multipart/form-data">
+                                <form action="admin_categories.php" method="POST" enctype="multipart/form-data">
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold">Category Name</label>
-                                        <input type="text" name="category_name" class="form-control" placeholder="e.g. Sofa, Bed" required>
+                                        <input type="text" name="category_name" class="form-control" required>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold">Status</label>
@@ -167,7 +138,6 @@ $result = $conn->query("SELECT * FROM categories ORDER BY category_id DESC");
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold">Cover Image</label>
                                         <input type="file" name="category_image" class="form-control">
-                                        <div class="form-text">Recommended size: 400x400px</div>
                                     </div>
                                     <button type="submit" name="add_category" class="btn btn-dark w-100">Add Category</button>
                                 </form>
@@ -177,9 +147,7 @@ $result = $conn->query("SELECT * FROM categories ORDER BY category_id DESC");
 
                     <div class="col-md-8">
                         <div class="card border-0 shadow-sm rounded-3">
-                            <div class="card-header bg-white py-3 border-bottom">
-                                <h5 class="m-0 fw-bold">Category List</h5>
-                            </div>
+                            <div class="card-header bg-white py-3 border-bottom"><h5 class="m-0 fw-bold">Category List</h5></div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
                                     <table class="table table-hover align-middle mb-0">
@@ -188,38 +156,31 @@ $result = $conn->query("SELECT * FROM categories ORDER BY category_id DESC");
                                                 <th class="ps-4">Image</th>
                                                 <th>Name</th>
                                                 <th>Status</th>
-                                                <th>Created At</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php if ($result->num_rows > 0): ?>
-                                                <?php while($row = $result->fetch_assoc()): ?>
-                                                <tr>
-                                                    <td class="ps-4">
-                                                        <img src="img/<?php echo $row['category_image']; ?>" class="rounded border" style="width: 50px; height: 50px; object-fit: cover;" alt="img">
-                                                    </td>
-                                                    <td class="fw-bold"><?php echo $row['category_name']; ?></td>
-                                                    <td>
-                                                        <?php if($row['status'] == 'Active'): ?>
-                                                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill">Active</span>
-                                                        <?php else: ?>
-                                                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill">Hidden</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td class="small text-muted"><?php echo date("d M Y", strtotime($row['created_at'])); ?></td>
-                                                    <td>
-                                                        <a href="#" 
-                                                           class="btn btn-sm btn-outline-danger"
-                                                           onclick="confirmDelete('admin_categories.php?delete_id=<?php echo $row['category_id']; ?>')">
-                                                            <i class="bi bi-trash"></i>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                <?php endwhile; ?>
-                                            <?php else: ?>
-                                                <tr><td colspan="5" class="text-center py-4 text-muted">No categories yet.</td></tr>
-                                            <?php endif; ?>
+                                            <?php while($row = $result->fetch_assoc()): ?>
+                                            <tr>
+                                                <td class="ps-4">
+                                                    <img src="img/<?php echo htmlspecialchars($row['category_image']); ?>" 
+                                                    class="rounded border" 
+                                                    style="width: 50px; height: 50px; object-fit: cover;" 
+                                                    onerror="this.onerror=null; this.src='img/default_category.png';">
+                                                </td>
+                                                <td class="fw-bold"><?php echo htmlspecialchars($row['category_name']); ?></td>
+                                                <td>
+                                                    <span class="badge <?php echo $row['status']=='Active'?'bg-success':'bg-secondary'; ?> bg-opacity-10 <?php echo $row['status']=='Active'?'text-success':'text-secondary'; ?> rounded-pill">
+                                                        <?php echo $row['status']; ?>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?php echo $row['category_id']; ?>)">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <?php endwhile; ?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -227,16 +188,14 @@ $result = $conn->query("SELECT * FROM categories ORDER BY category_id DESC");
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="admin_script.js"></script>
-
     <script>
-        // 显示 PHP Session 中的消息
+        // SweetAlert 提示处理
         <?php if(isset($_SESSION['swal'])): ?>
             Swal.fire({
                 icon: '<?php echo $_SESSION['swal']['type']; ?>',
@@ -246,24 +205,22 @@ $result = $conn->query("SELECT * FROM categories ORDER BY category_id DESC");
                 position: 'top-end',
                 showConfirmButton: false,
                 timer: 3000,
-                timerProgressBar: true,
+                timerProgressBar: true
             });
             <?php unset($_SESSION['swal']); ?>
         <?php endif; ?>
 
-        // 删除确认函数
-        function confirmDelete(url) {
+        function confirmDelete(id) {
             Swal.fire({
                 title: 'Are you sure?',
-                text: "You won't be able to revert this!",
+                text: "Delete this category?",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#343a40',
-                cancelButtonColor: '#d33',
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = url;
+                    window.location.href = 'admin_categories.php?delete_id=' + id;
                 }
             })
         }

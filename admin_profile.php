@@ -173,13 +173,14 @@ $user = $result_user->fetch_assoc();
                             <div class="card-body">
                                 <form method="POST" action="">
                                     <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold">Username</label>
-                                        <input type="text" name="username" class="form-control" value="<?php echo htmlspecialchars($user['username']); ?>" required>
-                                    </div>
-                                    <div class="mb-3">
                                         <label class="form-label text-muted small fw-bold">Email Address</label>
                                         <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($user['email']); ?>" required>
                                     </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small fw-bold">Username</label>
+                                        <input type="text" name="username" class="form-control" value="<?php echo htmlspecialchars($user['username']); ?>" required>
+                                    </div>
+                                    
                                     <button type="submit" name="update_info" class="btn btn-dark">Update Info</button>
                                 </form>
                             </div>

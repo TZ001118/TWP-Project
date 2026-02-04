@@ -10,20 +10,41 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
 
 // --- 2. 数据统计 (Data Aggregation) ---
 
-// A. 关键指标卡片 (Key Metrics)
-// ✅ 修正：统计总收入要用 grand_total
-$revenue_res = $conn->query("SELECT SUM(grand_total) as total FROM orders WHERE status != 'Cancelled'");
-$total_revenue = $revenue_res->fetch_assoc()['total'] ?? 0;
+// A. 关键指标卡片 (Top Cards)
 
-// 总订单数
+// 1. Total Product Sales (纯销售额 - 不含运费/税)
+$revenue_sql = "
+    SELECT SUM(oi.quantity * oi.price) as total_revenue
+    FROM order_items oi
+    JOIN orders o ON oi.order_id = o.id
+    WHERE o.status != 'Cancelled'
+";
+$revenue_res = $conn->query($revenue_sql);
+$total_revenue = $revenue_res->fetch_assoc()['total_revenue'] ?? 0;
+
+// 2. Total Cost of Sales (实际销售成本)
+// 逻辑：卖出的商品数量 * 进货价
+$cogs_sql = "
+    SELECT SUM(oi.quantity * p.cost_price) as total_cost
+    FROM order_items oi
+    JOIN orders o ON oi.order_id = o.id
+    JOIN products p ON oi.product_id = p.product_id
+    WHERE o.status != 'Cancelled'
+";
+$cogs_res = $conn->query($cogs_sql);
+$total_cost = $cogs_res->fetch_assoc()['total_cost'] ?? 0;
+
+// 3. Total Net Profit (实际净利润)
+$total_profit = $total_revenue - $total_cost;
+
+// 4. Total Orders & Pending
 $orders_res = $conn->query("SELECT COUNT(*) as total FROM orders");
 $total_orders = $orders_res->fetch_assoc()['total'] ?? 0;
-
-// 待处理订单
 $pending_res = $conn->query("SELECT COUNT(*) as total FROM orders WHERE status = 'Pending'");
 $pending_orders = $pending_res->fetch_assoc()['total'] ?? 0;
 
-// B. 图表数据 1：订单状态分布 (Pie Chart)
+
+// B. 图表数据 1：订单状态分布 (右侧 Donut Chart - 保持不变)
 $status_query = $conn->query("SELECT status, COUNT(*) as count FROM orders GROUP BY status");
 $status_labels = [];
 $status_data = [];
@@ -32,27 +53,40 @@ while ($row = $status_query->fetch_assoc()) {
     $status_data[] = $row['count'];
 }
 
-// C. 图表数据 2：最近 7 天销售趋势 (Line Chart)
-// ✅ 修正：趋势图也要用 grand_total
+// C. 图表数据 2：财务趋势 (左侧 Line Chart - 改为 3条线)
+// 按日期分组，计算每天的 Sales, Cost, Profit
 $trend_query = $conn->query("
-    SELECT DATE(order_date) as date, SUM(grand_total) as daily_total 
-    FROM orders 
-    WHERE status != 'Cancelled' 
-    GROUP BY DATE(order_date) 
-    ORDER BY date DESC 
+    SELECT 
+        DATE(o.order_date) as date,
+        SUM(oi.quantity * oi.price) as daily_revenue,
+        SUM(oi.quantity * p.cost_price) as daily_cost
+    FROM orders o
+    JOIN order_items oi ON o.id = oi.order_id
+    JOIN products p ON oi.product_id = p.product_id
+    WHERE o.status != 'Cancelled'
+    GROUP BY DATE(o.order_date)
+    ORDER BY date DESC
     LIMIT 7
 ");
 
 $trend_dates = [];
-$trend_sales = [];
-// 因为查出来是倒序的（最新的在前），我们需要反转数组让图表从左到右显示
+$trend_revenue_data = [];
+$trend_cost_data = [];
+$trend_profit_data = [];
+
 $rows = [];
 while($r = $trend_query->fetch_assoc()) { $rows[] = $r; }
-$rows = array_reverse($rows);
+$rows = array_reverse($rows); // 反转数组，日期从左到右
 
 foreach ($rows as $row) {
-    $trend_dates[] = date("M d", strtotime($row['date'])); // 例如: Feb 01
-    $trend_sales[] = $row['daily_total'];
+    $trend_dates[] = date("M d", strtotime($row['date'])); 
+    $rev = $row['daily_revenue'];
+    $cost = $row['daily_cost'];
+    $prof = $rev - $cost;
+
+    $trend_revenue_data[] = $rev;
+    $trend_cost_data[] = $cost;
+    $trend_profit_data[] = $prof;
 }
 ?>
 
@@ -117,45 +151,64 @@ foreach ($rows as $row) {
             </nav>
 
             <div class="container-fluid p-4">
-
-                <div class="row g-4 mb-4">
-                    <div class="col-md-4">
+                
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-4">
+                    
+                    <div class="col">
                         <div class="card border-0 shadow-sm rounded-3 bg-custom-primary text-white h-100">
-                            <div class="card-body p-4">
-                                <h6 class="text-uppercase mb-2 text-white-50 small fw-bold">Total Revenue</h6>
-                                <h2 class="fw-bold mb-0">RM <?php echo number_format($total_revenue, 2); ?></h2>
+                            <div class="card-body p-3"> 
+                                <h6 class="text-uppercase mb-2 text-white-50 small fw-bold">Total Product Sales</h6>
+                                <h3 class="fw-bold mb-0">RM <?php echo number_format($total_revenue, 2); ?></h3>
+                                <small class="text-white-50" style="font-size: 0.75rem;">(Excl. Tax & Shipping)</small>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+
+                    <div class="col">
                         <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
-                            <div class="card-body p-4">
+                            <div class="card-body p-3">
+                                <h6 class="text-uppercase mb-2 text-muted small fw-bold">Total Net Profit</h6>
+                                <h3 class="fw-bold mb-0 text-success">RM <?php echo number_format($total_profit, 2); ?></h3>
+                                <small class="text-muted" style="font-size: 0.75rem;">(Sales - Cost)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+                            <div class="card-body p-3">
+                                <h6 class="text-uppercase mb-2 text-muted small fw-bold">Cost of Sales</h6>
+                                <h3 class="fw-bold mb-0 text-danger">RM <?php echo number_format($total_cost, 2); ?></h3>
+                                <small class="text-muted" style="font-size: 0.75rem;">Total Cost of Sold Items</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+                            <div class="card-body p-3">
                                 <h6 class="text-uppercase mb-2 text-muted small fw-bold">Total Orders</h6>
-                                <h2 class="fw-bold mb-0"><?php echo $total_orders; ?></h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
-                            <div class="card-body p-4">
-                                <h6 class="text-uppercase mb-2 text-muted small fw-bold">Pending Action</h6>
                                 <div class="d-flex align-items-center justify-content-between">
-                                    <h2 class="fw-bold mb-0 text-warning"><?php echo $pending_orders; ?></h2>
-                                    <span class="small text-muted">Orders to ship</span>
+                                    <h3 class="fw-bold mb-0 text-dark"><?php echo $total_orders; ?></h3>
+                                    <?php if($pending_orders > 0): ?>
+                                        <span class="badge bg-warning text-dark"><?php echo $pending_orders; ?> Pending</span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
 
                 <div class="row g-4">
+                    
                     <div class="col-lg-8">
                         <div class="card border-0 shadow-sm rounded-3 h-100">
                             <div class="card-header bg-white py-3 fw-bold">
-                                Sales Trend (Last 7 Active Days)
+                                Financial Trend (Sales vs Cost vs Profit)
                             </div>
                             <div class="card-body">
-                                <canvas id="salesChart" height="120"></canvas>
+                                <canvas id="financeChart" height="120"></canvas>
                             </div>
                         </div>
                     </div>
@@ -180,13 +233,17 @@ foreach ($rows as $row) {
     <script src="admin_script.js"></script>
 
     <script>
-        // 1. 准备数据
+        // --- 1. 准备数据 (PHP -> JS) ---
         const trendLabels = <?php echo json_encode($trend_dates); ?>;
-        const trendData = <?php echo json_encode($trend_sales); ?>;
         
+        // 折线图数据 (3条线)
+        const dataSales = <?php echo json_encode($trend_revenue_data); ?>;
+        const dataCost = <?php echo json_encode($trend_cost_data); ?>;
+        const dataProfit = <?php echo json_encode($trend_profit_data); ?>;
+
+        // 订单状态数据 (右侧图表)
         const statusLabels = <?php echo json_encode($status_labels); ?>;
         const statusData = <?php echo json_encode($status_data); ?>;
-
         const statusColors = statusLabels.map(label => {
             if (label === 'Pending') return '#ffc107';   
             if (label === 'Shipped') return '#0d6efd';   
@@ -195,30 +252,57 @@ foreach ($rows as $row) {
             return '#6c757d'; 
         });
 
-        // 2. 绘制销售趋势折线图
-        const ctx1 = document.getElementById('salesChart').getContext('2d');
+        // --- 2. 绘制左侧财务趋势图 (3 Lines) ---
+        const ctx1 = document.getElementById('financeChart').getContext('2d');
         new Chart(ctx1, {
             type: 'line',
             data: {
                 labels: trendLabels,
-                datasets: [{
-                    label: 'Sales (RM)', // 修改标签单位
-                    data: trendData,
-                    borderColor: '#99d5c5',
-                    backgroundColor: 'rgba(153, 213, 197, 0.2)',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: true
-                }]
+                datasets: [
+                    {
+                        label: 'Sales',
+                        data: dataSales,
+                        borderColor: '#20c997', // Teal (销售额)
+                        backgroundColor: 'rgba(32, 201, 151, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: 'Cost',
+                        data: dataCost,
+                        borderColor: '#dc3545', // Red (成本)
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: 'Net Profit',
+                        data: dataProfit,
+                        borderColor: '#198754', // Dark Green (净利润)
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5], // 虚线显示，区分度更高
+                        tension: 0.3,
+                        fill: false
+                    }
+                ]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f3f3f3' } },
+                    x: { grid: { display: false } }
+                }
             }
         });
 
-        // 3. 绘制状态甜甜圈图
+        // --- 3. 绘制右侧订单状态图 (Pie Chart - 保持原样) ---
         const ctx2 = document.getElementById('statusChart').getContext('2d');
         new Chart(ctx2, {
             type: 'doughnut',

@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($conn->query($sql_order) === TRUE) {
         $order_auto_id = $conn->insert_id;
 
-        // C. 搬运商品
+        // C. 搬运商品 + ★★★ 扣减库存 ★★★
         $sql_cart = "SELECT cart.product_id, cart.quantity, products.price 
                      FROM cart 
                      JOIN products ON cart.product_id = products.product_id 
@@ -102,8 +102,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $qty = $item['quantity'];
                 $price = $item['price'];
 
+                // 1. 插入到 order_items 表
                 $conn->query("INSERT INTO order_items (order_id, product_id, quantity, price) 
                               VALUES ('$order_auto_id', '$pid', '$qty', '$price')");
+
+                // 2. ★★★ 新增：从 products 表扣减对应库存 ★★★
+                // 逻辑：旧库存 - 购买数量 = 新库存
+                $conn->query("UPDATE products SET stock_quantity = stock_quantity - $qty WHERE product_id = '$pid'");
             }
         }
 

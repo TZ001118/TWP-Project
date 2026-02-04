@@ -455,6 +455,27 @@ $products_result = $conn->query($products_sql);
                 </div>
 
             </div>
+            <?php if($total_pages > 1): ?>
+            <div class="card-footer bg-white border-0 py-3">
+                <nav>
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item <?php if($page <= 1) echo 'disabled'; ?>">
+                            <a class="page-link" href="?page=<?php echo $page-1; ?>">Previous</a>
+                        </li>
+
+                        <?php for($i = 1; $i <= $total_pages; $i++): ?>
+                        <li class="page-item <?php if($page == $i) echo 'active'; ?>">
+                            <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                        </li>
+                        <?php endfor; ?>
+
+                        <li class="page-item <?php if($page >= $total_pages) echo 'disabled'; ?>">
+                            <a class="page-link" href="?page=<?php echo $page+1; ?>">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 

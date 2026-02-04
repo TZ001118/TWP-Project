@@ -3,13 +3,17 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// 确保引入了数据库连接，路径根据你的文件结构调整
+require_once 'db_conn.php'; 
+
 $nav_cart_count = 0;
 $nav_cart_total = 0;
 
-if (isset($_SESSION['user_id']) && isset($conn)) {
+// 现在只需检查 session 即可，因为 $conn 已经在上面 require 了
+if (isset($_SESSION['user_id'])) {
     $uid = $_SESSION['user_id'];
     
-    // 修正：使用 product_id
+    // 使用预处理语句更安全
     $sql_nav = "SELECT cart.quantity, products.price 
                 FROM cart 
                 JOIN products ON cart.product_id = products.product_id 
@@ -48,10 +52,13 @@ if (isset($_SESSION['user_id']) && isset($conn)) {
             </div>
             
             <div class="search-section">
-                <div class="search-box">
-                    <input type="text" placeholder="Try: Sofa Bed">
-                    <button class="search-icon"><img src="img/Search.png" alt="🔍" style="width:30px; height:30px;"></button>
-                </div>
+                <form action="FURNITURE.php" method="GET" class="search-box">
+                    <input type="text" name="search" placeholder="Try: Sofa Bed" required 
+                           value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                    <button type="submit" class="search-icon">
+                        <img src="img/Search.png" alt="🔍" style="width:30px; height:30px;">
+                    </button>
+                </form>
             </div>
 
             <div class="user-info" style="display: flex; align-items: center; gap: 20px;">
@@ -96,15 +103,15 @@ if (isset($_SESSION['user_id']) && isset($conn)) {
                 </div>
             </div>
             
-            <a href="HOME.php" class="<?php echo ($current_page == 'home') ? 'active' : ''; ?>">HOME</a>
+            <a href="HOME.php" class="<?php echo (isset($current_page) && $current_page == 'home') ? 'active' : ''; ?>">HOME</a>
             
-            <a href="FURNITURE.php" class="<?php echo ($current_page == 'furniture') ? 'active' : ''; ?>">FURNITURE</a>
+            <a href="FURNITURE.php" class="<?php echo (isset($current_page) && $current_page == 'furniture') ? 'active' : ''; ?>">FURNITURE</a>
             
-            <a href="CUSTOM-MADE.php" class="<?php echo ($current_page == 'custom') ? 'active' : ''; ?>">CUSTOM MADE</a>
+            <a href="CUSTOM-MADE.php" class="<?php echo (isset($current_page) && $current_page == 'custom') ? 'active' : ''; ?>">CUSTOM MADE</a>
             
-            <a href="VIRTUAL SHOWROOM.php" class="<?php echo ($current_page == 'virtual') ? 'active' : ''; ?>">VIRTUAL SHOWROOM</a>
+            <a href="VIRTUAL SHOWROOM.php" class="<?php echo (isset($current_page) && $current_page == 'virtual') ? 'active' : ''; ?>">VIRTUAL SHOWROOM</a>
             
-            <a href="REVIEWS.php" class="<?php echo ($current_page == 'reviews') ? 'active' : ''; ?>">REVIEWS</a>
+            <a href="REVIEWS.php" class="<?php echo (isset($current_page) && $current_page == 'reviews') ? 'active' : ''; ?>">REVIEWS</a>
         </div>
     </nav>
     <style>
@@ -166,7 +173,6 @@ if (isset($_SESSION['user_id']) && isset($conn)) {
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // 定义 Toast 风格 (右上角, 3秒消失)
     const Toast = Swal.mixin({
         toast: true,
         position: 'top-end',
@@ -180,18 +186,15 @@ if (isset($_SESSION['user_id']) && isset($conn)) {
     });
 
     <?php 
-    // 1. 检查 Session 里的消息 (add_to_cart, reviews 等用这个)
     if (isset($_SESSION['swal'])) {
         $type = $_SESSION['swal']['type'];
         $title = $_SESSION['swal']['title'];
         $text = $_SESSION['swal']['text'];
         echo "Toast.fire({ icon: '$type', title: '$title', text: '$text' });";
-        unset($_SESSION['swal']); // 弹完就销毁
+        unset($_SESSION['swal']); 
     }
     
-    // 2. 检查 URL 里的 success=1 (修改资料用这个)
     if (isset($_GET['success']) && $_GET['success'] == 1) {
-        // ★★★ 修复点：这里原来漏了 echo 和引号，现在加上了 ★★★
         echo "Toast.fire({ icon: 'success', title: 'Success!', text: 'Profile updated successfully!' });";
         echo "window.history.replaceState(null, null, window.location.pathname);";
     }

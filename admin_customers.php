@@ -29,21 +29,33 @@ if (isset($_GET['delete_id'])) {
     exit();
 }
 
-// --- 3. 处理搜索与筛选 ---
+// --- 3. 分页与搜索配置 (Pagination Logic) ---
+$limit = 10; // 每页显示 10 人
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
 $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
 $status_filter = isset($_GET['status']) ? $_GET['status'] : '';
 
-// 查询条件
-$sql = "SELECT * FROM users WHERE role = 'customer' AND is_deleted = 0";
+// --- 4. 构建查询条件 (Where Clause) ---
+// 提取公共的 WHERE 语句，方便计算总数和查询数据
+$where_sql = "WHERE role = 'customer' AND is_deleted = 0";
 
 if (!empty($search)) {
-    $sql .= " AND (user_id LIKE '%$search%' OR username LIKE '%$search%' OR email LIKE '%$search%' OR phone LIKE '%$search%')";
+    $where_sql .= " AND (user_id LIKE '%$search%' OR username LIKE '%$search%' OR email LIKE '%$search%' OR phone LIKE '%$search%')";
 }
 if (!empty($status_filter)) {
-    $sql .= " AND account_status = '$status_filter'";
+    $where_sql .= " AND account_status = '$status_filter'";
 }
-$sql .= " ORDER BY created_at DESC";
 
+// --- 5. 计算总条数 (用于分页) ---
+$count_sql = "SELECT COUNT(*) as total FROM users $where_sql";
+$count_result = $conn->query($count_sql);
+$total_records = $count_result->fetch_assoc()['total'];
+$total_pages = ceil($total_records / $limit);
+
+// --- 6. 获取当前页数据 (带 LIMIT) ---
+$sql = "SELECT * FROM users $where_sql ORDER BY created_at DESC LIMIT $offset, $limit";
 $result = $conn->query($sql);
 ?>
 
@@ -211,6 +223,27 @@ $result = $conn->query($sql);
                 </div>
 
             </div>
+            <?php if($total_pages > 1): ?>
+            <div class="card-footer bg-white border-0 py-3">
+                <nav>
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item <?php if($page <= 1) echo 'disabled'; ?>">
+                            <a class="page-link" href="?page=<?php echo $page-1; ?>">Previous</a>
+                        </li>
+
+                        <?php for($i = 1; $i <= $total_pages; $i++): ?>
+                        <li class="page-item <?php if($page == $i) echo 'active'; ?>">
+                            <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                        </li>
+                        <?php endfor; ?>
+
+                        <li class="page-item <?php if($page >= $total_pages) echo 'disabled'; ?>">
+                            <a class="page-link" href="?page=<?php echo $page+1; ?>">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 

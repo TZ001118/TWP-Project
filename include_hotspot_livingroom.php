@@ -4,9 +4,9 @@ if (!isset($conn)) { include 'db_conn.php'; }
 
 // --- 配置：Living Room 的热点 ---
 $hotspots_living = [
-    ['id' => 1, 'top' => '53%', 'left' => '28%'], 
-    ['id' => 2, 'top' => '40%', 'left' => '79%'],
-    ['id' => 3, 'top' => '65%', 'left' => '48%']
+    ['id' => 17, 'top' => '53%', 'left' => '28%'], 
+    ['id' => 16, 'top' => '40%', 'left' => '79%'],
+    ['id' => 18, 'top' => '65%', 'left' => '48%']
 ];
 
 // --- 获取商品数据 ---

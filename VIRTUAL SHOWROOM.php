@@ -42,47 +42,92 @@ include 'db_conn.php';
             justify-content: center;
         }
 
-        .grid-left, .grid-right {
-            flex: 1; 
-            min-width: 450px;
-        }
+        .grid-left, .grid-right { flex: 1; min-width: 450px; }
 
-        /* Inspiration Grid (下方三列) */
-        .inspiration-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 25px; 
-        }
+        /* Inspiration Grid */
+        .inspiration-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
 
-        /* 默认图片容器 (适用于上面的两张大图) */
+        /* 图片容器 */
         .hotspot-section { 
             position: relative; 
             border-radius: 15px; 
-            overflow: hidden; 
+            /* overflow: hidden; <-- 删除 */
+            overflow: visible; /* ★★★ 修改点：改成 visible ★★★ */
             box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
             background: white; 
             width: 100%;
-            aspect-ratio: 3 / 2; /* 默认比例 1.5 : 1 */
+            aspect-ratio: 3 / 2; 
         }
 
-        /* ★★★ 核心修改：针对下方网格，让图片变高 ★★★ */
-        .inspiration-grid .hotspot-section {
-            aspect-ratio: 1 / 1; /* 改成 1:1 正方形，比原来的高很多 */
-            /* 如果想要更高(竖屏)，可以改成 aspect-ratio: 3 / 4; */
-        }
+        /* Showroom 小图强制正方形 */
+        .inspiration-grid .hotspot-section { aspect-ratio: 1 / 1; }
 
         .hotspot-container { position: relative; width: 100%; height: 100%; }
         .main-bg { width: 100%; height: 100%; display: block; border-radius: 15px; object-fit: cover; object-position: center; }
 
-        /* Hotspot 样式 (全局复用) */
-        .hotspot { position: absolute; cursor: pointer; z-index: 10; }
-        .hotspot-dot { width: 24px; height: 24px; background-color: #5eb4a1; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.2); position: relative; transition: transform 0.3s; }
+        /* --- ★★★ Showroom 专属热点样式优化 ★★★ --- */
+        .hotspot { 
+            position: absolute; 
+            cursor: pointer; 
+            z-index: 10; 
+            /* Showroom 的触控区比 Home 更大 */
+            width: 60px; 
+            height: 60px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translate(-50%, -50%);
+        }
+
+        .hotspot-dot { 
+            width: 30px; /* 稍微大一点点，更显眼 */
+            height: 30px; 
+            background-color: #5eb4a1; 
+            border: 3px solid white; 
+            border-radius: 50%; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.2); 
+            position: relative; 
+            transition: transform 0.3s; 
+            pointer-events: none;
+        }
+        
         .hotspot-dot::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; border-radius: 50%; border: 2px solid #5eb4a1; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { width: 100%; opacity: 1; } 100% { width: 300%; opacity: 0; } }
         .hotspot:hover .hotspot-dot { transform: scale(1.2); }
         
-        .hotspot-card { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(10px); width: 200px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); text-align: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; pointer-events: none; z-index: 100; }
-        .hotspot-card::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid white; }
+        .hotspot-card { 
+            position: absolute; 
+            bottom: 45px; 
+            left: 50%; 
+            transform: translateX(-50%) translateY(10px); 
+            width: 200px; 
+            background: white; 
+            padding: 15px; 
+            border-radius: 8px; 
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2); 
+            text-align: center; 
+            opacity: 0; 
+            visibility: hidden; 
+            transition: all 0.3s ease; 
+            pointer-events: none; 
+            
+            z-index: 9999; /* ★★★ 修改点：改大层级，防止被下面的图片挡住 ★★★ */
+            
+            padding-bottom: 25px; 
+            margin-bottom: -15px; 
+        }
+        
+        .hotspot-card::after { 
+            content: ''; 
+            position: absolute; 
+            bottom: 18px; /* 调整箭头位置 */
+            left: 50%; 
+            transform: translateX(-50%); 
+            border-left: 8px solid transparent; 
+            border-right: 8px solid transparent; 
+            border-top: 8px solid white; 
+        }
+        
         .hotspot:hover .hotspot-card { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); pointer-events: auto; }
         .hotspot-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; }
         .card-info h4 { font-size: 0.95rem; margin-bottom: 5px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -119,7 +164,7 @@ include 'db_conn.php';
                 </div>
 
                 <div class="grid-right">
-                    <div class="section-title" style="margin-bottom: 20px; font-size: 1.5rem;">Cozy Bedroom</div>
+                    <div class="section-title" style="margin-bottom: 20px; font-size: 1.5rem;">Study Room</div>
                     <?php include 'include_hotspot_bedroom.php'; ?>
                 </div>
 
@@ -141,6 +186,7 @@ include 'db_conn.php';
     </div>
 
     <script>
+        // --- 1. 导航栏滚动逻辑 ---
         window.onscroll = function() {
             const nav = document.querySelector('.navbar');
             if (nav) {
@@ -151,6 +197,62 @@ include 'db_conn.php';
                 }
             }
         };
+
+        // --- 2. 无刷新购物车逻辑 (AJAX) ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form[action="add_to_cart.php"]');
+
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault(); // ★★★ 阻止页面刷新 ★★★
+
+                    const formData = new FormData(this);
+
+                    fetch('add_to_cart.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        // 检查是否被踢到登录页
+                        if (response.redirected && response.url.includes('LOGIN-REGISTER.php')) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Please Login',
+                                text: 'You need to login to add items to cart.',
+                                showConfirmButton: true,
+                                confirmButtonText: 'Go to Login',
+                                confirmButtonColor: '#333'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = 'LOGIN-REGISTER.php';
+                                }
+                            });
+                            return;
+                        }
+
+                        // 成功添加
+                        if (response.ok) {
+                            // ★★★ 直接使用 navbar.php 里定义的 Toast ★★★
+                            Toast.fire({
+                                icon: 'success',
+                                title: 'Added to Cart'
+                            });
+
+                            // 更新购物车数字
+                            const cartBadge = document.querySelector('.cart-box span');
+                            if(cartBadge) {
+                                let currentCount = parseInt(cartBadge.innerText);
+                                if(isNaN(currentCount)) currentCount = 0;
+                                cartBadge.innerText = currentCount + 1;
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+            });
+        });
     </script>
 </body>
 </html>

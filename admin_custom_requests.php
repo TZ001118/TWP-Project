@@ -86,7 +86,7 @@ $result = $conn->query("SELECT * FROM custom_inquiries ORDER BY created_at DESC"
                 <div class="container-fluid p-0 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center">
                         <button class="btn btn-light btn-sm me-3 border" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
-                        <h5 class="m-0 d-none d-md-block text-secondary">Custom Inquiries</h5>
+                        <h5 class="m-0 d-none d-md-block text-secondary">Custom Requests</h5>
                     </div>
                     
                     <ul class="navbar-nav ms-auto flex-row align-items-center">

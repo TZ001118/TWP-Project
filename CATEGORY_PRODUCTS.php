@@ -128,6 +128,61 @@ $result = $conn->query($sql);
                 else nav.classList.remove('collapsed');
             }
         };
+            // ★★★ 核心修复：无刷新购物车逻辑 (含登录检查) ★★★
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form[action="add_to_cart.php"]');
+
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault(); // 阻止表单默认提交
+
+                    const formData = new FormData(this);
+
+                    fetch('add_to_cart.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        // ★ 检查点：如果后端把我们踢到了 LOGIN-REGISTER.php
+                        if (response.redirected && response.url.includes('LOGIN-REGISTER.php')) {
+                            // 弹窗提示用户需要登录，然后跳转
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Please Login',
+                                text: 'You need to login to add items to cart.',
+                                showConfirmButton: true,
+                                confirmButtonText: 'Go to Login',
+                                confirmButtonColor: '#333'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = 'LOGIN-REGISTER.php';
+                                }
+                            });
+                            return; // 终止后续操作
+                        }
+
+                        // 如果成功添加
+                        if (response.ok) {
+                            Toast.fire({
+                                icon: 'success',
+                                title: 'Added to Cart'
+                            });
+
+                            // 更新购物车数字
+                            const cartBadge = document.querySelector('.cart-box span');
+                            if(cartBadge) {
+                                let currentCount = parseInt(cartBadge.innerText);
+                                if(isNaN(currentCount)) currentCount = 0;
+                                cartBadge.innerText = currentCount + 1;
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+            });
+        });
     </script>
 </body>
 </html>

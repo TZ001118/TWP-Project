@@ -105,7 +105,26 @@ $result = $conn->query($sql);
 
         <div id="page-content-wrapper">
             <nav class="navbar navbar-light border-bottom px-4 py-3 bg-white">
-                <div class="container-fluid"><button class="btn btn-light btn-sm me-3 border" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button><h5 class="m-0 text-secondary">Manage Orders</h5></div>
+                <div class="container-fluid p-0 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-light btn-sm me-3 border" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
+                        <h5 class="m-0 d-none d-md-block text-secondary">Manage Orders</h5>
+                    </div>
+
+                    <ul class="navbar-nav ms-auto flex-row align-items-center">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="bg-secondary rounded-circle text-white d-flex justify-content-center align-items-center me-2" style="width: 35px; height: 35px;">AD</div>
+                                <span class="fw-bold d-none d-sm-block"><?php echo isset($_SESSION['username']) ? $_SESSION['username'] : 'Admin'; ?></span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 position-absolute">
+                                <li><a class="dropdown-item" href="admin_profile.php">Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="logout.php">Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
             </nav>
 
             <div class="container-fluid p-4">
